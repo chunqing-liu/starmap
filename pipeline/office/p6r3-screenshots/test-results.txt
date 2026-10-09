@@ -1,0 +1,61 @@
+P6R3 final acceptance summary — 2026-10-08 (UTC+8)
+Branch: feature/office-collab
+P6R2 parent: 9deee75
+Local-only delivery. No push. 9223 and android untouched.
+
+Final source office unit tests:
+  node node_modules/vitest/vitest.mjs run <all tests/office*.test.ts>
+  14 files passed; 84 tests passed; 19.94s; start 20:51:00.
+  P6R3: 20 tests passed, including ObservablePoint coordinate regression.
+
+Final source typecheck:
+  node node_modules/typescript/lib/tsc.js --noEmit
+  Exit 0; no diagnostics; 20:51.
+
+Final renderer production build:
+  node scripts/build-renderer.mjs
+  Exit 0; 1349 modules; built in 8.89s; 20:51.
+  Warnings retained: Zod pure-comment annotations; chunk above 500kB.
+
+Six final UI suites, run serially:
+  office-ui.mjs:      15/15 PASS (owned 5176/9224), 20:53.
+  office-p2-ui.mjs:   11/11 PASS (owned 5176/9224), 20:54.
+  office-p6r2-ui.mjs: 10/10 PASS (fresh owned profile, 5176/9224), 21:00.
+  office-p4-ui.mjs:    5/5 PASS (owned production 9225), 21:02.
+  office-p5-ui.mjs:    6/6 PASS (owned production 9225), 21:02.
+  office-p6-ui.mjs:    6/6 PASS (owned production 9225), 21:02.
+  Total: 53/53 PASS.
+
+Production harness:
+  node tests/office-production.mjs
+  Exit 0. beings://desktop/; original CSP; external network blocked;
+  no development-port dependency; production test injection disabled;
+  one Pixi canvas; local MIT license; no upstream office-image requests.
+  Own temporary production app closed and fixture cleaned by harness.
+
+P6R3 evidence continuation:
+  OFFICE_CDP_URL=http://127.0.0.1:9224 OFFICE_EVIDENCE_RESUME=1
+  node tests/office-p6r3-ui.mjs
+  Exit 0. Reused first 8 completed checks; remaining 5 newly passed.
+  13 total records are NOT 13 freshly rerun checks.
+  Swap: 23.54px / 107ms, actual pose sample clock, <=0.22px/ms+2px.
+  100 actors, 100 desks, 5 scene objects, 1 application, 0 position mismatches.
+  Unique allocated interaction slots; 107 extra renders in a 4s sample.
+  Hidden/reduced: zero continuing renders. No permanent actor labels.
+  No page errors in the completed continuation run.
+  9 PNGs: 7 reused captures + 07/08 captured at 20:46/20:47.
+  verification.json contains records, screenshot diagnostics and provenance.
+
+Retained failures, not counted as passes:
+  Shared-profile P6R2 Done timed out because P2 left non-demo alpha/beta.
+  Passed in a fresh isolated profile without falsifying product Done state.
+  Old swap assertion mixed cache-frame coordinates and polling clock.
+  Fixed to use the actual pose sample timestamp; no speed-limit relaxation.
+  Hidden test formerly reopened an already collapsed panel; corrected toggle.
+  Process quota error recovered after 30s wait; validation stayed serial.
+
+Full raw logs remain local in .p6r3-qa/ and are deliberately not committed.
+See P6R3-DELIVERY.md for exact log paths, differences and known limitations.
+100-person overview is very small at fit-to-height; not a legibility benchmark.
+Controlled fixtures do not prove external Being business completion.
+Human visual acceptance remains pending. No installer/full-repository test claim.

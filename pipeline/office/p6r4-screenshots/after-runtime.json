@@ -1,0 +1,608 @@
+{
+  "version": "after",
+  "runOrder": 1791514555526,
+  "endpoint": "http://127.0.0.1:9224",
+  "evidence": [
+    {
+      "file": "after-reach-01.png",
+      "capturedAt": "2026-10-09T02:56:08.747Z",
+      "diagnostics": {
+        "applications": 1,
+        "tickerListeners": 2,
+        "ticker": true,
+        "runtimeId": "runtime-f0879ab2-31d1-4904-a869-bbc7f5339914",
+        "actors": 6,
+        "positionMismatches": 0,
+        "textures": 87,
+        "listeners": 3,
+        "sceneSubscriptions": 1,
+        "resizeObservers": 1,
+        "maintenance": false,
+        "breathing": false,
+        "idleRenders": 0,
+        "renders": 166,
+        "rosterTransitions": 0,
+        "reduced": false,
+        "effects": 6,
+        "transitions": 0,
+        "leisureMoving": false,
+        "visualActors": [
+          {
+            "id": "p6r4-person-0",
+            "x": 675,
+            "y": 775,
+            "state": "idle",
+            "seated": true,
+            "facing": "front",
+            "activity": "phone",
+            "stage": "interacting",
+            "propId": "rest-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-1",
+            "x": 75,
+            "y": 775,
+            "state": "idle",
+            "seated": false,
+            "facing": "back",
+            "activity": "brew",
+            "stage": "interacting",
+            "propId": "coffee-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-2",
+            "x": 825,
+            "y": 125,
+            "state": "idle",
+            "seated": false,
+            "facing": "back",
+            "activity": "wander",
+            "stage": "interacting",
+            "propId": "collab-board",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-3",
+            "x": 275,
+            "y": 775,
+            "state": "idle",
+            "seated": false,
+            "facing": "front",
+            "activity": "exercise",
+            "stage": "interacting",
+            "propId": "fitness-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-4",
+            "x": 475,
+            "y": 775,
+            "state": "idle",
+            "seated": true,
+            "facing": "front",
+            "activity": "read",
+            "stage": "interacting",
+            "propId": "reading-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-5",
+            "x": 725,
+            "y": 775,
+            "state": "idle",
+            "seated": true,
+            "facing": "front",
+            "activity": "phone",
+            "stage": "interacting",
+            "propId": "rest-corner",
+            "slot": 1,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          }
+        ],
+        "desks": 6,
+        "sceneObjects": [
+          {
+            "id": "coffee-corner",
+            "x": 1,
+            "y": 14
+          },
+          {
+            "id": "fitness-corner",
+            "x": 5,
+            "y": 14
+          },
+          {
+            "id": "reading-corner",
+            "x": 9,
+            "y": 14
+          },
+          {
+            "id": "rest-corner",
+            "x": 13,
+            "y": 14
+          },
+          {
+            "id": "collab-board",
+            "x": 16,
+            "y": 1
+          }
+        ],
+        "room": {
+          "width": 21,
+          "height": 18
+        },
+        "scale": 0.9144444444444444
+      }
+    },
+    {
+      "file": "after-reach-02.png",
+      "capturedAt": "2026-10-09T02:56:09.351Z",
+      "diagnostics": {
+        "applications": 1,
+        "tickerListeners": 2,
+        "ticker": true,
+        "runtimeId": "runtime-f0879ab2-31d1-4904-a869-bbc7f5339914",
+        "actors": 6,
+        "positionMismatches": 0,
+        "textures": 88,
+        "listeners": 3,
+        "sceneSubscriptions": 1,
+        "resizeObservers": 1,
+        "maintenance": false,
+        "breathing": false,
+        "idleRenders": 0,
+        "renders": 185,
+        "rosterTransitions": 0,
+        "reduced": false,
+        "effects": 6,
+        "transitions": 0,
+        "leisureMoving": false,
+        "visualActors": [
+          {
+            "id": "p6r4-person-0",
+            "x": 675,
+            "y": 775,
+            "state": "idle",
+            "seated": true,
+            "facing": "front",
+            "activity": "phone",
+            "stage": "interacting",
+            "propId": "rest-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-1",
+            "x": 75,
+            "y": 775,
+            "state": "idle",
+            "seated": false,
+            "facing": "back",
+            "activity": "brew",
+            "stage": "interacting",
+            "propId": "coffee-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-2",
+            "x": 825,
+            "y": 125,
+            "state": "idle",
+            "seated": false,
+            "facing": "back",
+            "activity": "wander",
+            "stage": "interacting",
+            "propId": "collab-board",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-3",
+            "x": 275,
+            "y": 775,
+            "state": "idle",
+            "seated": false,
+            "facing": "front",
+            "activity": "exercise",
+            "stage": "interacting",
+            "propId": "fitness-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-4",
+            "x": 475,
+            "y": 775,
+            "state": "idle",
+            "seated": true,
+            "facing": "front",
+            "activity": "read",
+            "stage": "interacting",
+            "propId": "reading-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-5",
+            "x": 725,
+            "y": 775,
+            "state": "idle",
+            "seated": true,
+            "facing": "front",
+            "activity": "phone",
+            "stage": "interacting",
+            "propId": "rest-corner",
+            "slot": 1,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          }
+        ],
+        "desks": 6,
+        "sceneObjects": [
+          {
+            "id": "coffee-corner",
+            "x": 1,
+            "y": 14
+          },
+          {
+            "id": "fitness-corner",
+            "x": 5,
+            "y": 14
+          },
+          {
+            "id": "reading-corner",
+            "x": 9,
+            "y": 14
+          },
+          {
+            "id": "rest-corner",
+            "x": 13,
+            "y": 14
+          },
+          {
+            "id": "collab-board",
+            "x": 16,
+            "y": 1
+          }
+        ],
+        "room": {
+          "width": 21,
+          "height": 18
+        },
+        "scale": 0.9144444444444444
+      }
+    },
+    {
+      "file": "after-coffee.png",
+      "capturedAt": "2026-10-09T02:56:11.988Z",
+      "diagnostics": {
+        "applications": 1,
+        "tickerListeners": 2,
+        "ticker": true,
+        "runtimeId": "runtime-f0879ab2-31d1-4904-a869-bbc7f5339914",
+        "actors": 6,
+        "positionMismatches": 0,
+        "textures": 91,
+        "listeners": 3,
+        "sceneSubscriptions": 1,
+        "resizeObservers": 1,
+        "maintenance": false,
+        "breathing": false,
+        "idleRenders": 0,
+        "renders": 262,
+        "rosterTransitions": 0,
+        "reduced": false,
+        "effects": 6,
+        "transitions": 0,
+        "leisureMoving": false,
+        "visualActors": [
+          {
+            "id": "p6r4-person-0",
+            "x": 675,
+            "y": 775,
+            "state": "idle",
+            "seated": true,
+            "facing": "front",
+            "activity": "phone",
+            "stage": "interacting",
+            "propId": "rest-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-1",
+            "x": 75,
+            "y": 775,
+            "state": "idle",
+            "seated": false,
+            "facing": "back",
+            "activity": "coffee",
+            "stage": "interacting",
+            "propId": "coffee-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-2",
+            "x": 825,
+            "y": 125,
+            "state": "idle",
+            "seated": false,
+            "facing": "back",
+            "activity": "wander",
+            "stage": "interacting",
+            "propId": "collab-board",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-3",
+            "x": 275,
+            "y": 775,
+            "state": "idle",
+            "seated": false,
+            "facing": "front",
+            "activity": "exercise",
+            "stage": "interacting",
+            "propId": "fitness-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-4",
+            "x": 475,
+            "y": 775,
+            "state": "idle",
+            "seated": true,
+            "facing": "front",
+            "activity": "read",
+            "stage": "interacting",
+            "propId": "reading-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-5",
+            "x": 725,
+            "y": 775,
+            "state": "idle",
+            "seated": true,
+            "facing": "front",
+            "activity": "phone",
+            "stage": "interacting",
+            "propId": "rest-corner",
+            "slot": 1,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          }
+        ],
+        "desks": 6,
+        "sceneObjects": [
+          {
+            "id": "coffee-corner",
+            "x": 1,
+            "y": 14
+          },
+          {
+            "id": "fitness-corner",
+            "x": 5,
+            "y": 14
+          },
+          {
+            "id": "reading-corner",
+            "x": 9,
+            "y": 14
+          },
+          {
+            "id": "rest-corner",
+            "x": 13,
+            "y": 14
+          },
+          {
+            "id": "collab-board",
+            "x": 16,
+            "y": 1
+          }
+        ],
+        "room": {
+          "width": 21,
+          "height": 18
+        },
+        "scale": 0.9144444444444444
+      }
+    },
+    {
+      "file": "after-present.png",
+      "capturedAt": "2026-10-09T02:56:18.596Z",
+      "diagnostics": {
+        "applications": 1,
+        "tickerListeners": 2,
+        "ticker": true,
+        "runtimeId": "runtime-f0879ab2-31d1-4904-a869-bbc7f5339914",
+        "actors": 6,
+        "positionMismatches": 0,
+        "textures": 108,
+        "listeners": 3,
+        "sceneSubscriptions": 1,
+        "resizeObservers": 1,
+        "maintenance": false,
+        "breathing": false,
+        "idleRenders": 0,
+        "renders": 458,
+        "rosterTransitions": 0,
+        "reduced": false,
+        "effects": 6,
+        "transitions": 0,
+        "leisureMoving": false,
+        "visualActors": [
+          {
+            "id": "p6r4-person-0",
+            "x": 875,
+            "y": 125,
+            "state": "talking",
+            "seated": false,
+            "facing": "back",
+            "activity": "listen",
+            "stage": "interacting",
+            "propId": "collab-board",
+            "slot": 1,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-1",
+            "x": 825,
+            "y": 125,
+            "state": "talking",
+            "seated": false,
+            "facing": "back",
+            "activity": "present",
+            "stage": "interacting",
+            "propId": "collab-board",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-2",
+            "x": 825,
+            "y": 125,
+            "state": "idle",
+            "seated": false,
+            "facing": "back",
+            "activity": "wander",
+            "stage": "interacting",
+            "propId": "collab-board",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-3",
+            "x": 275,
+            "y": 775,
+            "state": "idle",
+            "seated": false,
+            "facing": "front",
+            "activity": "exercise",
+            "stage": "interacting",
+            "propId": "fitness-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-4",
+            "x": 475,
+            "y": 775,
+            "state": "idle",
+            "seated": true,
+            "facing": "front",
+            "activity": "read",
+            "stage": "interacting",
+            "propId": "reading-corner",
+            "slot": 0,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          },
+          {
+            "id": "p6r4-person-5",
+            "x": 725,
+            "y": 775,
+            "state": "idle",
+            "seated": true,
+            "facing": "front",
+            "activity": "phone",
+            "stage": "interacting",
+            "propId": "rest-corner",
+            "slot": 1,
+            "screen": "off",
+            "scaleX": 1,
+            "scaleY": 1
+          }
+        ],
+        "desks": 6,
+        "sceneObjects": [
+          {
+            "id": "coffee-corner",
+            "x": 1,
+            "y": 14
+          },
+          {
+            "id": "fitness-corner",
+            "x": 5,
+            "y": 14
+          },
+          {
+            "id": "reading-corner",
+            "x": 9,
+            "y": 14
+          },
+          {
+            "id": "rest-corner",
+            "x": 13,
+            "y": 14
+          },
+          {
+            "id": "collab-board",
+            "x": 16,
+            "y": 1
+          }
+        ],
+        "room": {
+          "width": 21,
+          "height": 18
+        },
+        "scale": 0.9144444444444444
+      }
+    }
+  ],
+  "errors": []
+}
