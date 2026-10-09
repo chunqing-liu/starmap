@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "apiVersion": 1,
+  "minSdkVersion": "1.3.0",
+  "id": "community.pipeline",
+  "name": "星图流程看板",
+  "version": "1.3.0",
+  "description": "用站、节点和检查点编排工作流，支持资源协作侧栏、Being 对话和节点任务状态关联。",
+  "author": "chunqing-liu / Beings contributors · Portal Desktop plugin adaptation",
+  "entry": "index.html",
+  "capabilities": ["storage", "town.public.read", "being.read", "being.compose", "being.chat", "ui", "workspace.read", "being.tasks.read"],
+  "contributes": {
+    "views": [{ "id": "board", "title": "流程看板" }, { "id": "settings", "title": "看板设置" }, { "id": "companion", "title": "资源协作" }],
+    "commands": [{ "id": "open-board", "title": "打开流程看板", "view": "board" }, { "id": "being-assist", "title": "打开 Being 协作", "view": "board" }],
+    "settingsView": "settings",
+    "slots": [
+      { "id": "workspace", "title": "看板协作侧栏", "view": "companion", "location": "right-sidebar" },
+      { "id": "resource", "title": "分析当前资源", "view": "companion", "location": "resource-actions", "resourceKinds": ["seeds", "embers", "kits", "announcements"] }
+    ]
+  }
+}

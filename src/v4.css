@@ -1,0 +1,600 @@
+/* V7：沿用工具库/卷轴的“大标题 + 常驻功能栏”层级。大标题由 PlaceHeading 统一提供。 */
+#pipeline-view {
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+#pipeline-view .pipeline-page-toolbar {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 52px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.pipeline-toolbar-search,
+.pipeline-toolbar-filters select {
+  min-width: 0;
+  height: 32px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--control);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.pipeline-toolbar-search { flex: 1 1 260px; max-width: 360px; }
+.pipeline-toolbar-filters { display: flex; align-items: center; gap: 8px; }
+.pipeline-toolbar-filters select { max-width: 142px; color: var(--secondary); }
+.pipeline-toolbar-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.pipeline-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.pipeline-toolbar-button:hover:not(:disabled) { color: var(--text); }
+.pipeline-toolbar-button[aria-pressed=true] { border-color: var(--line); background: var(--selected); color: var(--text); }
+.pipeline-focus-button { border-color: var(--line); background: var(--control); }
+
+/* B 案：缩放只改变信息层级，节点卡片的布局尺寸始终固定。 */
+.star-map-canvas .react-flow__node-item { height: 86px; }
+.star-map-item {
+  height: 86px;
+  min-height: 86px;
+  overflow: visible;
+  padding: 10px 13px;
+}
+
+.star-map-canvas .star-map-item strong {
+  display: -webkit-box;
+  min-height: 17px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.star-map-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 参考 Arco 画布：16px 视觉端口、清晰输入/输出语义、拖拽时强化目标。 */
+.star-map-canvas .react-flow__handle.star-map-port {
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  width: calc(16px / var(--star-map-zoom, 1));
+  height: calc(16px / var(--star-map-zoom, 1));
+  border: calc(1px / var(--star-map-zoom, 1)) solid color-mix(in srgb, var(--text) 20%, var(--line));
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 2px 7px #0002;
+  color: var(--secondary);
+  cursor: crosshair;
+  opacity: .72;
+  transition: opacity .12s ease, transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+
+.star-map-canvas .react-flow__handle.star-map-port span {
+  pointer-events: none;
+  font: 700 calc(11px / var(--star-map-zoom, 1))/1 ui-sans-serif, system-ui, sans-serif;
+}
+
+.star-map-canvas .react-flow__handle.star-map-anchor-port {
+  width: calc(10px / var(--star-map-zoom, 1));
+  height: calc(10px / var(--star-map-zoom, 1));
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0;
+  cursor: crosshair;
+  pointer-events: auto;
+  transition: opacity .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+
+.star-map-canvas .react-flow__node:hover .star-map-anchor-port,
+.star-map-canvas .react-flow__node.selected .star-map-anchor-port,
+.star-map-canvas .react-flow__handle.star-map-anchor-port:hover,
+.star-map-canvas .react-flow__handle.star-map-anchor-port.connecting,
+.star-map-canvas .react-flow__handle.star-map-anchor-port.valid {
+  border: calc(1px / var(--star-map-zoom, 1)) solid #a78bfa;
+  border-radius: 50%;
+  background: color-mix(in srgb, #a78bfa 72%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, #a78bfa 16%, transparent);
+  opacity: .9;
+}
+.star-map-station.is-compact .star-map-anchor-port {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.star-map-canvas .react-flow__handle.star-map-port.is-input { left: calc(-10px / var(--star-map-zoom, 1)); }
+.star-map-canvas .react-flow__handle.star-map-port.is-output { right: calc(-10px / var(--star-map-zoom, 1)); }
+
+.star-map-canvas .react-flow__node:hover .star-map-port,
+.star-map-canvas .react-flow__node.selected .star-map-port,
+.star-map-canvas .react-flow__handle.star-map-port:hover,
+.star-map-canvas .react-flow__handle.star-map-port.connecting,
+.star-map-canvas .react-flow__handle.star-map-port.valid {
+  border-color: #6d7cff;
+  background: #6d7cff;
+  box-shadow: 0 0 0 5px color-mix(in srgb, #6d7cff 16%, transparent), 0 3px 9px #0003;
+  color: white;
+  opacity: 1;
+}
+
+.star-map-canvas .react-flow__handle.star-map-port.is-input:hover,
+.star-map-canvas .react-flow__handle.star-map-port.is-input.connecting,
+.star-map-canvas .react-flow__handle.star-map-port.is-input.valid { transform: translate(-50%, -50%) scale(1.08); }
+.star-map-canvas .react-flow__handle.star-map-port.is-output:hover,
+.star-map-canvas .react-flow__handle.star-map-port.is-output.connecting,
+.star-map-canvas .react-flow__handle.star-map-port.is-output.valid { transform: translate(50%, -50%) scale(1.08); }
+
+.star-map-canvas .react-flow__handle.star-map-port::after {
+  position: absolute;
+  top: 50%;
+  width: max-content;
+  padding: 3px 5px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface);
+  box-shadow: 0 4px 12px #0002;
+  color: var(--secondary);
+  font-size: 8px;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition: opacity .12s ease;
+  white-space: nowrap;
+}
+
+.star-map-canvas .react-flow__handle.star-map-port.is-input::after { right: calc(100% + 7px); content: "连入"; }
+.star-map-canvas .react-flow__handle.star-map-port.is-output::after { left: calc(100% + 7px); content: "拖出连线"; }
+.star-map-canvas .react-flow__handle.star-map-port:hover::after { opacity: 1; }
+
+.star-map-canvas .react-flow__connection-path {
+  filter: drop-shadow(0 2px 4px color-mix(in srgb, #6d7cff 30%, transparent));
+}
+
+.star-map-canvas-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.star-map-canvas-hint span { color: var(--secondary); }
+.star-map-canvas-hint small { color: var(--muted); font-size: 8px; }
+.star-map-canvas-hint.is-connecting { border-color: color-mix(in srgb, #6d7cff 55%, var(--line)); }
+.star-map-canvas-hint.is-connecting span { color: #6d7cff; }
+
+/* V5：文字按钮使用正文微文案字号，避免继承缩放按钮的 14px 图标字号。 */
+.star-map-toolbar .star-map-fit {
+  width: auto;
+  min-width: 38px;
+  padding: 0 7px;
+  color: var(--secondary);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.pipeline-demand-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.pipeline-demand-tools input,
+.pipeline-demand-tools select {
+  min-width: 0;
+  min-height: 30px;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--control);
+  color: var(--secondary);
+  font-size: 10px;
+}
+
+.pipeline-demand-tools input { grid-column: 1 / -1; }
+.pipeline-demand-group { display: flex; flex-direction: column; gap: 3px; }
+.pipeline-demand-group + .pipeline-demand-group { margin-top: 9px; }
+.pipeline-demand-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 8px;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: .04em;
+}
+.pipeline-demand-group-title small { font-size: 9px; }
+.pipeline-demand-item.multi-selected { box-shadow: inset 2px 0 #6d7cff; }
+
+.pipeline-demand-context-menu {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  min-width: 126px;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 10px 28px #0003;
+}
+
+.pipeline-demand-context-menu button {
+  padding: 8px 10px;
+  border-radius: 5px;
+  color: var(--secondary);
+  font-size: 11px;
+  text-align: left;
+}
+.pipeline-demand-context-menu button:hover:not(:disabled) { background: var(--control); color: var(--text); }
+.pipeline-demand-context-menu button:disabled { color: var(--muted); opacity: .45; }
+
+.pipeline-history {
+  display: grid;
+  gap: 7px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.pipeline-history > strong { font-size: 11px; font-weight: 550; }
+.pipeline-history > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 8px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--control);
+  font-size: 9px;
+}
+.pipeline-history b { color: var(--secondary); font-weight: 550; }
+.pipeline-history time { color: var(--muted); text-align: right; }
+.pipeline-history span { grid-column: 1 / -1; color: var(--secondary); line-height: 1.55; overflow-wrap: anywhere; }
+
+/* V8 详情以描述为主体，状态/负责人/下一步收进紧凑元信息。 */
+.pipeline-detail-core { display: grid; gap: 12px; }
+.pipeline-detail-identity { display: grid; gap: 7px; }
+.pipeline-detail-identity > span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.pipeline-detail-identity > strong { font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.pipeline-detail-identity label { gap: 5px; }
+.pipeline-detail-description { gap: 6px; }
+.pipeline-detail-description textarea { min-height: 152px; line-height: 1.7; }
+.pipeline-detail-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: end; }
+.pipeline-detail-meta > label { min-width: 0; }
+.pipeline-detail-meta > span { display: grid; gap: 3px; min-width: 0; color: var(--secondary); font-size: 10px; line-height: 1.5; }
+.pipeline-detail-meta > span b { color: var(--muted); font-size: 9px; font-weight: 500; }
+.pipeline-core-facts { display: grid; gap: 8px; margin: 0; }
+.pipeline-core-facts > div { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px; font-size: 11px; line-height: 1.6; }
+.pipeline-core-facts dt { color: var(--muted); }
+.pipeline-core-facts dd { margin: 0; color: var(--secondary); overflow-wrap: anywhere; }
+.pipeline-next-actions { display: grid; gap: 7px; padding-top: 2px; }
+.pipeline-next-actions > span { color: var(--muted); font-size: 10px; }
+.pipeline-next-actions button { width: 100%; min-height: 34px; }
+
+.pipeline-more-info,
+.pipeline-comments { border-top: 1px solid var(--line); }
+.pipeline-more-info > summary,
+.pipeline-comments > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 2px;
+  color: var(--secondary);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 550;
+  list-style: none;
+}
+.pipeline-more-info > summary::-webkit-details-marker,
+.pipeline-comments > summary::-webkit-details-marker { display: none; }
+.pipeline-more-info > summary::after,
+.pipeline-comments > summary::after { color: var(--muted); content: "＋"; font-size: 13px; font-weight: 400; }
+.pipeline-more-info[open] > summary::after,
+.pipeline-comments[open] > summary::after { content: "−"; }
+.pipeline-comments > summary small { margin-left: auto; color: var(--muted); font-size: 9px; font-weight: 400; }
+.pipeline-more-info > div,
+.pipeline-comments-body { display: grid; gap: 14px; padding: 3px 0 4px; }
+
+.pipeline-comment-list { display: grid; gap: 10px; }
+.pipeline-comment-list article { padding-bottom: 10px; border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent); }
+.pipeline-comment-list article:last-child { padding-bottom: 0; border-bottom: 0; }
+.pipeline-comment-list header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.pipeline-comment-list strong { color: var(--secondary); font-size: 10px; font-weight: 600; }
+.pipeline-comment-list time { color: var(--muted); font-size: 8px; white-space: nowrap; }
+.pipeline-comment-list p { margin: 5px 0 0; color: var(--secondary); font-size: 10px; line-height: 1.65; overflow-wrap: anywhere; white-space: pre-wrap; }
+.pipeline-comments-body textarea { min-height: 70px; }
+.pipeline-comment-send { width: 100%; }
+
+/* 插件专注模式仅折叠自身侧栏，不操作宿主页面。 */
+#pipeline-view.pipeline-focus-mode {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg);
+}
+
+#pipeline-view.pipeline-focus-mode .star-map-shell.is-focus-mode {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+#pipeline-view.pipeline-focus-mode .pipeline-main,
+#pipeline-view.pipeline-focus-mode .star-map-canvas {
+  min-height: 0;
+}
+
+@media (max-width: 760px) {
+  .star-map-canvas-hint small { display: none; }
+}
+
+/* P13：入口固定在顶栏两侧，折叠后的侧栏释放全部画布空间。 */
+#pipeline-view .pipeline-shell {
+  --pipeline-left: 180px;
+  --pipeline-right: 230px;
+  display: grid;
+  grid-template-columns: var(--pipeline-left) minmax(0, 1fr) var(--pipeline-right);
+}
+#pipeline-view .pipeline-shell.left-collapsed { --pipeline-left: 0px; }
+#pipeline-view .pipeline-shell.right-collapsed { --pipeline-right: 0px; }
+#pipeline-view .pipeline-demands.is-collapsed,
+#pipeline-view .pipeline-inspector.is-collapsed {
+  display: block;
+  visibility: hidden;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* P13fix: 提升特异度，压过 app/styles.css 里 V2 遗留的 .pipeline-rail-toggle{width:100%;padding:8px 0;writing-mode:vertical-rl}（同特异度但加载在后，曾把 24px 按钮撑成整条工具栏宽）。 */
+#pipeline-view .pipeline-rail-toggle {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  line-height: 1;
+  transition: color .15s ease, opacity .15s ease;
+}
+#pipeline-view .pipeline-rail-toggle:hover:not(:disabled),
+#pipeline-view .pipeline-rail-toggle:active:not(:disabled) { background: transparent; color: var(--text); }
+.pipeline-rail-toggle:focus-visible { outline: 2px solid color-mix(in srgb, #6d7cff 62%, transparent); outline-offset: 3px; }
+.pipeline-page-toolbar .pipeline-rail-toggle-left { top: 50%; right: auto; left: 14px; transform: translateY(-50%); }
+.pipeline-page-toolbar .pipeline-rail-toggle-right { top: 50%; right: 14px; left: auto; transform: translateY(-50%); }
+.pipeline-demands:not(.is-collapsed),
+.pipeline-inspector:not(.is-collapsed) { position: relative; }
+.pipeline-square-icon {
+  position: relative;
+  display: block;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  color: var(--secondary);
+}
+.pipeline-square-icon::after {
+  position: absolute;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  content: "";
+  transform: translateY(-50%) rotate(45deg);
+}
+.pipeline-square-icon.is-left::after { left: 2px; transform: translateY(-50%) rotate(-135deg); }
+.pipeline-square-icon.is-right::after { right: 2px; }
+.pipeline-rail-toggle:hover .pipeline-square-icon { color: var(--text); }
+.pipeline-rail-content { min-width: 0; min-height: 0; width: 100%; }
+.pipeline-demands:not(.is-collapsed) .pipeline-rail-content { display: flex; flex-direction: column; height: 100%; }
+.pipeline-inspector:not(.is-collapsed) .pipeline-inspector-body { min-height: 0; }
+
+/* 专注模式仍是应用内覆盖层，但左右栏可由画布按钮临时唤出。 */
+#pipeline-view.pipeline-focus-mode .star-map-shell.is-focus-mode {
+  grid-template-columns: var(--pipeline-left) minmax(0, 1fr) var(--pipeline-right);
+}
+#pipeline-view.pipeline-focus-mode .pipeline-demands:not(.is-collapsed),
+#pipeline-view.pipeline-focus-mode .pipeline-inspector:not(.is-collapsed) { display: flex; }
+#pipeline-view.pipeline-focus-mode .pipeline-inspector:not(.is-collapsed) { display: block; }
+
+/* 新建星轨是一键动作；命名和归组都留到创建后。 */
+.pipeline-demand-create-button {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, #6d7cff 35%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, #6d7cff 8%, var(--control));
+  color: var(--secondary);
+  font-size: 11px;
+  text-align: left;
+}
+.pipeline-demand-create-button:hover { background: color-mix(in srgb, #6d7cff 14%, var(--control)); color: var(--text); }
+.pipeline-sidebar-resize-handle {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+}
+.pipeline-sidebar-resize-handle-left { right: -4px; }
+.pipeline-sidebar-resize-handle-right { left: -4px; }
+.pipeline-sidebar-resize-handle:hover,
+.pipeline-sidebar-resize-handle:active { background: color-mix(in srgb, #6d7cff 28%, transparent); }
+.pipeline-demand-item { position: relative; cursor: grab; }
+.pipeline-demand-item:active { cursor: grabbing; }
+.pipeline-demand-item.is-pinned { border-color: color-mix(in srgb, #6d7cff 30%, var(--line)); }
+.pipeline-demand-unread {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--surface);
+  border-radius: 50%;
+  background: #92969d;
+}
+
+/* 注意力点放在卡片右上角，和 topline 内的状态色点分离。 */
+.star-map-item { position: relative; }
+.star-map-attention-dot {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  z-index: 10;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  box-shadow: 0 2px 5px #0003;
+}
+.star-map-attention-dot.is-action { background: #3478f6; }
+.star-map-attention-dot.is-update { background: #92969d; }
+
+/* 展开站的标题区保持独立，节点统一从 112px 以下开始。 */
+.star-map-station:not(.is-compact) .star-map-station-heading { min-height: 28px; }
+.star-map-station.is-station-linked {
+  border-color: #8b5cf6;
+  border-top-color: #8b5cf6;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #8b5cf6 28%, transparent), 0 12px 26px color-mix(in srgb, #8b5cf6 16%, transparent);
+}
+.star-map-station.is-station-linked.is-station-chain-broken {
+  border-color: #F59E0B;
+  border-top-color: #F59E0B;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #F59E0B 28%, transparent), 0 12px 26px color-mix(in srgb, #F59E0B 16%, transparent);
+}
+.star-map-canvas .react-flow__node-station { z-index: 0 !important; transition: width .16s ease, height .16s ease; }
+.star-map-canvas .react-flow__node-item { z-index: 2 !important; }
+.star-map-canvas .react-flow__node-item.selected { z-index: 4 !important; }
+.star-map-canvas .react-flow__edge.is-pending-station-link .react-flow__edge-path { stroke-dasharray: 5 5; }
+.star-map-canvas .react-flow__edge.pipeline-edge-node .react-flow__edge-path {
+  stroke: #3d86a8;
+  stroke-width: 2.2px;
+}
+.star-map-canvas .react-flow__edge.pipeline-edge-node.is-internal {
+  z-index: 1 !important;
+  pointer-events: none;
+}
+.star-map-canvas .react-flow__edge.pipeline-edge-node.is-internal .react-flow__edge-path {
+  stroke: #4c9bb0;
+  stroke-width: 2.4px;
+  stroke-dasharray: 4 2;
+  pointer-events: stroke;
+}
+.star-map-canvas .react-flow__edge.pipeline-edge-station .react-flow__edge-path {
+  stroke: #8b5cf6;
+  stroke-width: 2.6px;
+}
+.star-map-canvas .react-flow__edge.pipeline-edge-station-anchor {
+  pointer-events: none;
+}
+.star-map-canvas .react-flow__edge.pipeline-edge-station-anchor .react-flow__edge-path {
+  stroke: color-mix(in srgb, #8b5cf6 45%, transparent);
+  stroke-width: 1.5px;
+  stroke-dasharray: 5 4;
+  pointer-events: none;
+}
+.star-map-canvas .react-flow__edge.pipeline-edge-station-anchor.is-editable {
+  pointer-events: stroke;
+}
+.star-map-canvas .react-flow__edge.pipeline-edge-station-anchor.is-editable .react-flow__edge-path {
+  pointer-events: stroke;
+}
+.star-map-canvas .react-flow__edge.pipeline-edge-node.is-return .react-flow__edge-path {
+  stroke: #c06f4b;
+  stroke-dasharray: 6 4;
+}
+.star-map-canvas .react-flow__edge:hover .react-flow__edge-path,
+.star-map-canvas .react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 3.8px;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, currentColor 45%, transparent));
+}
+.star-map-canvas .react-flow__selection {
+  border: 1px solid #6d7cff;
+  background: color-mix(in srgb, #6d7cff 10%, transparent);
+}
+.star-map-canvas .react-flow__pane { cursor: crosshair; }
+.star-map-canvas .react-flow__pane.dragging { cursor: grabbing; }
+
+.star-map-context-menu [role="separator"],
+.pipeline-demand-context-menu [role="separator"] { height: 1px; margin: 3px 5px; background: var(--line); }
+.star-map-context-menu button:disabled { color: var(--muted); opacity: .45; }
+.star-map-context-menu button.is-danger,
+.pipeline-demand-context-menu button.is-danger { color: #b34b47; }
+
+@media (max-width: 760px) {
+  #pipeline-view .pipeline-shell.left-collapsed { --pipeline-left: 0px; }
+  #pipeline-view .pipeline-shell.right-collapsed { --pipeline-right: 0px; }
+}
+
+.star-map-toolbar .star-map-create-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 2px;
+  padding-left: 3px;
+  border-left: 1px solid var(--line);
+}
+.star-map-toolbar .star-map-create-button {
+  width: auto;
+  min-width: 0;
+  height: 25px;
+  padding: 0 6px;
+  color: var(--secondary);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.star-map-toolbar .star-map-create-button:hover { background: var(--selected); color: var(--text); }
+
+@container stage (max-width: 700px) {
+  #pipeline-view .pipeline-page-toolbar { flex-wrap: wrap; gap: 8px; padding: 9px 44px; }
+  .pipeline-toolbar-search { flex: 1 1 180px; max-width: none; }
+  .pipeline-toolbar-actions { margin-left: 0; }
+}
+
+@container stage (max-width: 520px) {
+  .pipeline-toolbar-filters { flex: 1 1 auto; }
+  .pipeline-toolbar-filters select { flex: 1 1 0; max-width: none; }
+  .pipeline-toolbar-actions { width: 100%; }
+  .pipeline-toolbar-button { flex: 1 1 0; }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "starmap-plugin",
+  "private": true,
+  "version": "1.3.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "verify:package": "node scripts/verify-package.mjs",
+    "check": "npm run typecheck && npm run build && npm run verify:package"
+  },
+  "dependencies": {
+    "@xyflow/react": "12.11.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@beings/grove-plugin-sdk": "file:vendor/grove-plugin-sdk",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "esbuild": "^0.25.0",
+    "tar": "^7.5.22",
+    "typescript": "^5.9.3"
+  },
+  "description": "Standalone Starmap workflow board plugin for Grove-compatible desktop clients",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chunqing-liu/starmap.git"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}
