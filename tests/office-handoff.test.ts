@@ -1,0 +1,100 @@
+import { describe, expect, it } from 'vitest';
+import { HandoffController } from '../desktop/renderer/pipeline/office/handoff';
+import { createStarmapRuntime, createStarmapWorld } from '../desktop/renderer/pipeline/office/world';
+import { officeSceneObjects } from '../desktop/renderer/pipeline/office/scene-objects';
+import { DEMO_IDENTITIES } from '../desktop/renderer/pipeline/office/identities';
+import { OfficeRuntime } from '../desktop/renderer/pipeline/office/vendor/runtime/OfficeRuntime';
+import { builtinPlugins } from '../desktop/renderer/pipeline/office/vendor/runtime/builtin/officePack';
+import { SceneFault } from '../desktop/renderer/pipeline/office/vendor/runtime/protocol';
+import { GridNavigation } from '../desktop/renderer/pipeline/office/vendor/runtime/navigation';
+import { starmapHandoff } from '../desktop/renderer/pipeline/office/handoff';
+import { OfficeHost } from '../desktop/renderer/pipeline/office/host';
+import type { OfficeInput } from '../desktop/shared/office';
+const handoff = (eventId: string, mode: 'business' | 'visual' = 'visual', runOrder = 1): Extract<OfficeInput, { type: 'handoff' }> => ({ type: 'handoff', eventId, handoffId: eventId, beingId: 'demo-product', toBeingId: 'demo-development', runId: 'run-' + runOrder, runOrder, eventOrder: 1, mode, summary: '授权交接摘要', durationMs: 300 });
+const advance = (runtime: ReturnType<typeof createStarmapRuntime>) => { for (let elapsed = 0; elapsed < 30000; elapsed += 50) runtime.tick(50); };
+describe('starmap handoff lifecycle', () => {
+  it('never fabricates acknowledgement and starts business handoff only after receiver confirms', () => {
+    const runtime = createStarmapRuntime(DEMO_IDENTITIES), controller = new HandoffController(runtime);
+    controller.setEnabled(true);
+    controller.receive(handoff('visual'));
+    expect(runtime.snapshot().activities[0].plan.phases.flatMap(phase => phase.speech || []).some(speech => speech.text.includes('收到'))).toBe(false);
+    controller.receive(handoff('visual'));
+    expect(runtime.snapshot().activities).toHaveLength(1);
+    advance(runtime);
+    controller.receive({ ...handoff('business', 'business'), eventOrder: 2 });
+    expect(runtime.snapshot().activities).toHaveLength(1);
+    controller.receive({ type: 'handoff-confirm', eventId: 'ack', beingId: 'demo-development', runId: 'run-1', runOrder: 1, eventOrder: 1, handoffId: 'business' });
+    expect(runtime.snapshot().activities).toHaveLength(2);
+    expect(runtime.snapshot().activities[1].plan.phases.flatMap(phase => phase.speech || []).some(speech => speech.actorId === 'demo-development' && speech.text.includes('收到'))).toBe(true);
+    controller.dispose(); runtime.dispose();
+  });
+  it('cancels old run, waits for resource settlement, drops hidden events and surfaces BUSY', () => {
+    const runtime = createStarmapRuntime(DEMO_IDENTITIES), controller = new HandoffController(runtime);
+    controller.setEnabled(true); controller.receive(handoff('old'));
+    runtime.tick(100);
+    controller.receive(handoff('new', 'visual', 2));
+    expect(runtime.snapshot().activities).toHaveLength(1);
+    advance(runtime);
+    expect(runtime.snapshot().activities).toHaveLength(2);
+    expect(runtime.snapshot().resources.every(resource => !resource.holders.length)).toBe(true);
+    controller.receive(handoff('late', 'visual', 1));
+    expect(runtime.snapshot().activities).toHaveLength(2);
+    controller.setEnabled(false); controller.receive(handoff('hidden', 'visual', 3));
+    controller.setEnabled(true); advance(runtime);
+    expect(runtime.snapshot().activities).toHaveLength(2);
+    runtime.submit({ protocolVersion: '2.0', sceneId: runtime.sceneId, commandId: 'occupy', type: 'activity.start', capability: 'office.focus', participants: [{ entityId: 'demo-product', role: 'worker' }], params: { title: '真实持续活动' } });
+    controller.receive(handoff('busy', 'visual', 4));
+    expect(controller.feedback.some(item => item.code === 'BUSY')).toBe(true);
+    runtime.submit({ protocolVersion: '2.0', sceneId: runtime.sceneId, commandId: 'stop-continuous', type: 'activity.stop', activityId: 'occupy' });
+    advance(runtime);
+    expect(runtime.snapshot().resources.every(resource => !resource.holders.length)).toBe(true);
+    controller.dispose(); runtime.dispose();
+  });
+  it('tracks the activity ID when a nested submission first returns queued', () => {
+    const runtime = createStarmapRuntime(DEMO_IDENTITIES), controller = new HandoffController(runtime);
+    controller.setEnabled(true);
+    let nested = false;
+    const unsubscribe = runtime.subscribe(() => {
+      if (!nested && runtime.snapshot().records.some(record => record.command.commandId === 'projection-race')) { nested = true; controller.receive(handoff('nested')); }
+    });
+    runtime.submit({ protocolVersion: '2.0', sceneId: runtime.sceneId, commandId: 'projection-race', type: 'actor.presentation.set', actorId: 'demo-product', status: 'working', title: '真实工作', sourceRevision: 1 });
+    controller.receive({ type: 'cancel', eventId: 'cancel-nested', beingId: 'demo-product', runId: 'run-1', runOrder: 1, eventOrder: 2, targetEventId: 'nested' });
+    advance(runtime);
+    expect(runtime.snapshot().activities[0].status).toBe('cancelled');
+    expect(runtime.snapshot().resources.every(resource => !resource.holders.length)).toBe(true);
+    unsubscribe(); controller.dispose(); runtime.dispose();
+  });
+  it('surfaces NO_ROUTE once without teleporting or retrying', () => {
+    const world = createStarmapWorld(DEMO_IDENTITIES);
+    let blocked = false;
+    const runtime = new OfficeRuntime({ world, plugins: [...builtinPlugins, officeSceneObjects, starmapHandoff], createNavigation: templates => {
+      const navigation = new GridNavigation(templates), route = navigation.path.bind(navigation);
+      navigation.path = (...args) => { if (blocked) throw new SceneFault('NO_ROUTE', '测试注入：目标不可达'); return route(...args); };
+      return navigation;
+    } });
+    blocked = true;
+    const controller = new HandoffController(runtime);
+    controller.setEnabled(true); controller.receive(handoff('no-route'));
+    advance(runtime);
+    expect(controller.feedback).toEqual([{ eventId: 'no-route', status: 'failed', code: 'NO_ROUTE' }]);
+    expect(runtime.snapshot().activities).toHaveLength(1);
+    expect(runtime.readActors()[0].position.x).toBeLessThan(4);
+    expect(runtime.snapshot().resources.every(resource => !resource.holders.length)).toBe(true);
+    controller.dispose(); runtime.dispose();
+  });
+  it('rebuilds roster only after settled and preserves surviving actor positions', async () => {
+    const host = new OfficeHost(DEMO_IDENTITIES, () => {});
+    host.setActive(true); host.receive(handoff('roster'));
+    host.runtime.tick(100);
+    const original = host.runtime;
+    host.roster([...DEMO_IDENTITIES, { id: 'real', name: '真实伙伴', owners: ['real'], color: 123, demo: false }]);
+    expect(host.runtime).toBe(original);
+    advance(original);
+    const finalPositions = original.readActors().map(actor => actor.position);
+    await Promise.resolve();
+    expect(host.runtime).not.toBe(original);
+    expect(host.runtime.readActors().slice(0, 3).map(actor => actor.position)).toEqual(finalPositions);
+    expect(host.runtime.readActors()).toHaveLength(4);
+    host.dispose();
+  });
+});
