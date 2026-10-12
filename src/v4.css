@@ -49,7 +49,6 @@
 }
 .pipeline-toolbar-button:hover:not(:disabled) { color: var(--text); }
 .pipeline-toolbar-button[aria-pressed=true] { border-color: var(--line); background: var(--selected); color: var(--text); }
-.pipeline-focus-button { border-color: var(--line); background: var(--control); }
 
 /* B 案：缩放只改变信息层级，节点卡片的布局尺寸始终固定。 */
 .star-map-canvas .react-flow__node-item { height: 86px; }
@@ -118,6 +117,22 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, #a78bfa 16%, transparent);
   opacity: .9;
 }
+.star-map-station.is-compact {
+  padding: 8px 18px;
+}
+
+.star-map-station.is-compact .star-map-station-heading span {
+  font-size: 11px;
+}
+
+.star-map-station.is-compact .star-map-station-heading strong {
+  font-size: 14px;
+}
+
+.star-map-station.is-compact p {
+  font-size: 12px;
+}
+
 .star-map-station.is-compact .star-map-anchor-port {
   opacity: 0;
   pointer-events: none;
@@ -272,7 +287,6 @@
 .pipeline-history time { color: var(--muted); text-align: right; }
 .pipeline-history span { grid-column: 1 / -1; color: var(--secondary); line-height: 1.55; overflow-wrap: anywhere; }
 
-/* V8 详情以描述为主体，状态/负责人/下一步收进紧凑元信息。 */
 .pipeline-detail-core { display: grid; gap: 12px; }
 .pipeline-detail-identity { display: grid; gap: 7px; }
 .pipeline-detail-identity > span {
@@ -332,27 +346,6 @@
 .pipeline-comment-list p { margin: 5px 0 0; color: var(--secondary); font-size: 10px; line-height: 1.65; overflow-wrap: anywhere; white-space: pre-wrap; }
 .pipeline-comments-body textarea { min-height: 70px; }
 .pipeline-comment-send { width: 100%; }
-
-/* 插件专注模式仅折叠自身侧栏，不操作宿主页面。 */
-#pipeline-view.pipeline-focus-mode {
-  position: relative;
-  display: flex;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  background: var(--bg);
-}
-
-#pipeline-view.pipeline-focus-mode .star-map-shell.is-focus-mode {
-  flex: 1;
-  width: 100%;
-  min-height: 0;
-}
-
-#pipeline-view.pipeline-focus-mode .pipeline-main,
-#pipeline-view.pipeline-focus-mode .star-map-canvas {
-  min-height: 0;
-}
 
 @media (max-width: 760px) {
   .star-map-canvas-hint small { display: none; }
@@ -428,14 +421,6 @@
 .pipeline-demands:not(.is-collapsed) .pipeline-rail-content { display: flex; flex-direction: column; height: 100%; }
 .pipeline-inspector:not(.is-collapsed) .pipeline-inspector-body { min-height: 0; }
 
-/* 专注模式仍是应用内覆盖层，但左右栏可由画布按钮临时唤出。 */
-#pipeline-view.pipeline-focus-mode .star-map-shell.is-focus-mode {
-  grid-template-columns: var(--pipeline-left) minmax(0, 1fr) var(--pipeline-right);
-}
-#pipeline-view.pipeline-focus-mode .pipeline-demands:not(.is-collapsed),
-#pipeline-view.pipeline-focus-mode .pipeline-inspector:not(.is-collapsed) { display: flex; }
-#pipeline-view.pipeline-focus-mode .pipeline-inspector:not(.is-collapsed) { display: block; }
-
 /* 新建星轨是一键动作；命名和归组都留到创建后。 */
 .pipeline-demand-create-button {
   width: 100%;
@@ -449,6 +434,10 @@
   text-align: left;
 }
 .pipeline-demand-create-button:hover { background: color-mix(in srgb, #6d7cff 14%, var(--control)); color: var(--text); }
+.pipeline-template-picker { flex-shrink: 0; margin-bottom: 10px; color: var(--secondary); font-size: 11px; }
+.pipeline-template-picker > summary { cursor: pointer; }
+.pipeline-template-picker > div { display: grid; gap: 4px; margin-top: 6px; }
+.pipeline-template-picker button { text-align: left; }
 .pipeline-sidebar-resize-handle {
   position: absolute;
   z-index: 5;

@@ -16,7 +16,42 @@ export const blankPipeline: PipelineFlow = {
   description: "新建星轨从干净画布开始。",
   stations: [], nodes: [], transitions: [], layout: {}, itemOrder: [],
 };
-export const pipelineFlows: PipelineFlow[] = [beingsDevelopmentWorkflow, bugFixWorkflow, blankPipeline];
+export const lightPipeline: PipelineFlow = {
+  id: "light-star-track", name: "轻流程", version: "v1-light",
+  source: "src/models/templates.ts", groupName: "默认组",
+  description: "待办站 → 进行中站 → 完成站；通用闸口可按需保留或删除。",
+  stations: [
+    { id: "L-S01", kind: "station", title: "待办", subtitle: "明确任务", nodeIds: ["L-N01"] },
+    { id: "L-S02", kind: "station", title: "进行中", subtitle: "推进任务，按需过闸", nodeIds: ["L-N02", "L-G01"] },
+    { id: "L-S03", kind: "station", title: "完成", subtitle: "记录结果", nodeIds: ["L-N03"] },
+  ],
+  nodes: [
+    { id: "L-N01", kind: "node", stationId: "L-S01", title: "准备任务", status: "ready",
+      owner: "待补充", owner_group: "产品交付组", description: "明确任务目标与下一步。", trigger: ["事件"], execution: "being" },
+    { id: "L-N02", kind: "node", stationId: "L-S02", title: "处理任务", status: "pending",
+      owner: "待补充", owner_group: "产品交付组", description: "推进任务并记录处理结果。", trigger: ["事件"], execution: "being" },
+    { id: "L-G01", kind: "gate", gateRole: "custom", stationId: "L-S02", title: "通用闸口（可选）", status: "pending",
+      owner: "待补充", owner_group: "产品交付组", description: "需要确认时填写拍板人与完成证据；不需要时可删除此闸口。",
+      trigger: ["人工"], execution: "being+人", requires_human_review: true, options: ["通过", "退回"] },
+    { id: "L-N03", kind: "node", stationId: "L-S03", title: "记录结果", status: "pending",
+      owner: "待补充", owner_group: "产品交付组", description: "记录任务结果与完成证据。", trigger: ["事件"], execution: "being" },
+  ],
+  transitions: [
+    { id: "L-E01", fromNode: "L-N01", event: "开始", toNode: "L-N02" },
+    { id: "L-E02", fromNode: "L-N02", event: "完成", toNode: "L-G01" },
+    { id: "L-E03", fromNode: "L-G01", event: "通过", toNode: "L-N03" },
+  ],
+  stationLinks: [
+    { fromStationId: "L-S01", toStationId: "L-S02" },
+    { fromStationId: "L-S02", toStationId: "L-S03" },
+  ],
+  layout: {
+    "L-S01": { x: 80, y: 118 }, "L-S02": { x: 470, y: 118 }, "L-S03": { x: 860, y: 118 },
+    "L-N01": { x: 104, y: 254 }, "L-N02": { x: 494, y: 254 }, "L-G01": { x: 494, y: 362 }, "L-N03": { x: 884, y: 254 },
+  },
+  itemOrder: ["L-S01", "L-S02", "L-S03"],
+};
+export const pipelineFlows: PipelineFlow[] = [beingsDevelopmentWorkflow, bugFixWorkflow, blankPipeline, lightPipeline];
 export const getPipelineFlow = (workflowId?: string): PipelineFlow =>
   pipelineFlows.find((flow) => flow.id === workflowId) || defaultPipeline;
 

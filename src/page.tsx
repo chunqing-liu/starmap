@@ -53,6 +53,7 @@ import type {
 } from "./models/schema";
 import { BUG_STATUSES, NODE_STATUSES } from "./models/schema";
 import {
+  blankPipeline,
   createDemand,
   demandNodes,
   demandStations,
@@ -60,6 +61,7 @@ import {
   getPipelineFlow,
   loadPipelineState,
   PIPELINE_STORAGE_KEY,
+  pipelineFlows,
   sanitizePipelineState,
 } from "./models/templates";
 import {
@@ -74,7 +76,7 @@ const NODE_WIDTH = 214;
 const NODE_HEIGHT = 86;
 const STATION_MIN_WIDTH = 286;
 const STATION_EMPTY_HEIGHT = 152;
-const STATION_COMPACT_HEIGHT = 170;
+const STATION_COMPACT_HEIGHT = 96;
 const STATION_HEADER_HEIGHT = 112;
 const STATION_PADDING = 24;
 const STATION_NODE_GAP = 108;
@@ -87,8 +89,8 @@ const COLLISION_TOLERANCE = 8;
 const COLLISION_VERTICAL_GAP = 24;
 
 const statusLabels: Record<NodeStatus, string> = {
-  pending: "待开始", ready: "可开始", running: "运行中", waiting_human: "等待审核",
-  blocked: "已阻塞", failed: "失败", done: "已完成", skipped: "已跳过",
+  pending: "待开始", ready: "可开始", running: "进行中", waiting_human: "待评审",
+  blocked: "受阻", failed: "失败", done: "完成", skipped: "已跳过",
 };
 const demandStatusLabels: Record<Demand["status"], string> = {
   "demand.drafting": "待撰写", "demand.pending_review": "待评审", "demand.reviewed": "已评审",
@@ -234,7 +236,7 @@ type StationData = {
   stationLinked: boolean;
   stationChainBroken: boolean;
 };
-type ItemData = { item: PipelineNode; detailed: boolean; attention: Attention; statusLabel?: string };
+type ItemData = { item: PipelineNode; detailed: boolean; attention: Attention };
 type FlowNode = Node<StationData | ItemData>;
 
 function isStationNode(node: FlowNode): node is Node<StationData> {
@@ -265,7 +267,7 @@ function ItemNode({ data }: NodeProps<Node<ItemData>>) {
     <Handle id="anchor-input" type="target" position={Position.Left} className="star-map-anchor-port is-anchor-input" style={{ top: "35%" }} title="作为站首节点" aria-label={`${item.title} 作为站首锚定节点`} />
     <Handle id="anchor-output" type="source" position={Position.Right} className="star-map-anchor-port is-anchor-output" style={{ top: "65%" }} title="作为站尾节点" aria-label={`${item.title} 作为站尾锚定节点`} />
     {data.attention && <span className={`star-map-attention-dot is-${data.attention}`} title={data.attention === "action" ? "需要你操作" : "有更新"} aria-label={data.attention === "action" ? "需要你操作" : "有更新"} />}
-    <div className="star-map-item-topline"><code>{item.reviewCode || item.id}</code><i /><b>{item.kind === "gate" ? "闸口" : data.statusLabel || statusLabels[item.status]}</b></div>
+    <div className="star-map-item-topline"><code>{item.reviewCode || item.id}</code><i /><b>{item.kind === "gate" ? "闸口" : statusLabels[item.status]}</b></div>
     <strong>{item.title}</strong>
     <small title={data.detailed ? `${item.owner || "待补充"} · ${item.description || "待补充"}` : item.owner || "待补充"}>{data.detailed ? `${item.owner || "待补充"} · ${item.description || "待补充"}` : item.owner || "待补充"}</small>
   </div>;
@@ -401,7 +403,6 @@ function PipelineCanvas({
         id: item.id, type: "item", position: visibleNodePosition(item, positions, stationPositionById), selected: selectedItemIds.includes(item.id),
         data: {
           item, detailed, attention: attentionFor(item),
-          statusLabel: demand?.workflowId === "bug-fix" && item.id === "B04" && item.status === "done" ? "已关闭" : undefined,
         }, selectable: !hiddenInCompactStation,
         style: { width: NODE_WIDTH, height: NODE_HEIGHT, opacity: hiddenInCompactStation ? 0 : 1, pointerEvents: hiddenInCompactStation ? "none" : "auto", transition: "opacity 160ms ease" },
         zIndex: 2,
@@ -777,8 +778,6 @@ function PipelineContent() {
   const [sidebarWidths, setSidebarWidths] = useState(loadSidebarWidths);
   const sidebarResizeRef = useRef<{ side: "left" | "right"; startX: number; startWidth: number } | null>(null);
   const historyRef = useRef<{ past: PipelineLocalState[]; future: PipelineLocalState[]; restoring: boolean }>({ past: [], future: [], restoring: false });
-  const [focusMode, setFocusMode] = useState(false);
-  const focusSidebarState = useRef({ left: false, right: true });
   const [demandQuery, setDemandQuery] = useState("");
   const [demandFilter, setDemandFilter] = useState<"all" | Demand["status"]>("all");
   const [demandGroupBy, setDemandGroupBy] = useState<"group" | "status">("group");
@@ -895,29 +894,6 @@ function PipelineContent() {
     if (ids.length) setRightCollapsed(false);
   }, []);
 
-  const enterFocus = () => {
-    if (focusMode) return;
-    focusSidebarState.current = { left: leftCollapsed, right: rightCollapsed };
-    setLeftCollapsed(true); setRightCollapsed(true); setFocusMode(true);
-  };
-  const exitFocus = () => {
-    setFocusMode(false);
-    setLeftCollapsed(focusSidebarState.current.left); setRightCollapsed(focusSidebarState.current.right);
-  };
-  useEffect(() => {
-    if (!focusMode) return;
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") exitFocus(); };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [focusMode]);
-  useEffect(() => {
-    if (!focusMode) return;
-    const onPipelineExitFocus = () => exitFocus();
-    document.addEventListener("pipeline:exit-focus", onPipelineExitFocus);
-    return () => document.removeEventListener("pipeline:exit-focus", onPipelineExitFocus);
-  }, [focusMode]);
-
-
   const updateNode = <K extends keyof NodeOverride>(field: K, value: NodeOverride[K]) => {
     if (!selectedNode || !demand) return;
     const nodeOverrides = { ...demand.nodeOverrides, [selectedNode.id]: { ...demand.nodeOverrides[selectedNode.id], [field]: value } };
@@ -1010,8 +986,8 @@ function PipelineContent() {
     setSelectedDemandIds((current) => additive ? (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]) : [id]);
     changeState((current) => ({ ...current, selectedDemandId: id }), { history: false }); setSelectedItemIds([]); setRightCollapsed(false); setDemandContextMenu(null);
   };
-  const addDemand = () => {
-    const next = { ...createDemand("新建星轨", state.board.ownerGroup), sortOrder: Math.max(-1, ...state.demands.map((item) => item.sortOrder)) + 1 };
+  const addDemand = (template: PipelineFlow = blankPipeline) => {
+    const next = { ...createDemand("新建星轨", state.board.ownerGroup, template), sortOrder: Math.max(-1, ...state.demands.map((item) => item.sortOrder)) + 1 };
     changeState((current) => ({ ...current, selectedDemandId: next.id, demands: [...current.demands, next] }));
     setSelectedItemIds([]); setSelectedDemandIds([next.id]); setRightCollapsed(false);
   };
@@ -1209,7 +1185,7 @@ function PipelineContent() {
       : nextNodeActions[selectedNode.status]
     : null;
 
-  return <section id="pipeline-view" className={`view${focusMode ? " pipeline-focus-mode" : ""}`} aria-label="星图" onContextMenuCapture={(event) => event.preventDefault()}>
+  return <section id="pipeline-view" className="view" aria-label="星图" onContextMenuCapture={(event) => event.preventDefault()}>
     <header className="pipeline-page-toolbar" aria-label="星图常驻功能栏">
       <button type="button" className="pipeline-rail-toggle pipeline-rail-toggle-left" onClick={() => setLeftCollapsed((value) => !value)} aria-label={leftCollapsed ? "展开左侧星轨栏" : "收起左侧星轨栏"} aria-expanded={!leftCollapsed} title={leftCollapsed ? "展开星轨" : "收起星轨"}>
         <RailToggleIcon direction={leftCollapsed ? "right" : "left"} testId="pipeline-left-rail-icon" />
@@ -1221,18 +1197,18 @@ function PipelineContent() {
       </div>
       <div className="pipeline-toolbar-actions">
         <PipelineConnections context={`星轨：${demand ? demandDisplayTitle(demand) : '未选择'}\n${selectedNode ? `节点：${selectedNode.title}\n状态：${selectedNode.status}\n说明：${selectedNode.description}` : '未选择节点'}`} />
-        <button type="button" className="pipeline-toolbar-button pipeline-focus-button" onClick={focusMode ? exitFocus : enterFocus} aria-pressed={focusMode}>{focusMode ? "退出专注" : "专注"}</button>
       </div>
       <button type="button" className="pipeline-rail-toggle pipeline-rail-toggle-right" onClick={() => setRightCollapsed((value) => !value)} aria-label={rightCollapsed ? "展开右侧详情栏" : "收起右侧详情栏"} aria-expanded={!rightCollapsed} title={rightCollapsed ? "展开详情" : "收起详情"}>
         <RailToggleIcon direction={rightCollapsed ? "left" : "right"} testId="pipeline-right-rail-icon" />
       </button>
     </header>
-    <div className={`pipeline-shell star-map-shell${leftCollapsed ? " left-collapsed" : ""}${rightCollapsed ? " right-collapsed" : ""}${focusMode ? " is-focus-mode" : ""}`} style={{ "--pipeline-left": `${leftCollapsed ? 0 : sidebarWidths.left}px`, "--pipeline-right": `${rightCollapsed ? 0 : sidebarWidths.right}px` } as CSSProperties}>
+    <div className={`pipeline-shell star-map-shell${leftCollapsed ? " left-collapsed" : ""}${rightCollapsed ? " right-collapsed" : ""}`} style={{ "--pipeline-left": `${leftCollapsed ? 0 : sidebarWidths.left}px`, "--pipeline-right": `${rightCollapsed ? 0 : sidebarWidths.right}px` } as CSSProperties}>
       <aside className={`pipeline-demands${leftCollapsed ? " is-collapsed" : ""}`} aria-label="星轨">
         {!leftCollapsed && <div className="pipeline-sidebar-resize-handle pipeline-sidebar-resize-handle-left" role="separator" aria-orientation="vertical" aria-label="调整左侧星轨栏宽度" onPointerDown={(event) => startSidebarResize("left", event)} />}
         {!leftCollapsed && <>
           <div className="pipeline-sidebar-heading"><div><span className="pipeline-kicker">STAR TRACKS</span><h2>星轨</h2></div><span className="pipeline-count">{state.demands.length}</span></div>
-          <button type="button" className="pipeline-demand-create-button" onClick={addDemand}>+ 新建星轨</button>
+          <button type="button" className="pipeline-demand-create-button" onClick={() => addDemand()}>+ 新建星轨</button>
+          <details className="pipeline-template-picker"><summary>从模板新建</summary><div>{pipelineFlows.filter((template) => template.id !== blankPipeline.id).map((template) => <button key={template.id} type="button" title={template.description} onClick={() => addDemand(template)}>{template.name}</button>)}</div></details>
           <div className="pipeline-demand-list">{groupedDemands.map(([group, items]) => <div className="pipeline-demand-group" key={group} onDragOver={demandDragOver} onDrop={() => demandGroupBy === "group" && moveDemand(undefined, group)}><span className="pipeline-demand-group-title">{group} <small>{items.length}</small></span>{items.map((item) => <button type="button" draggable key={item.id} className={`pipeline-demand-item${item.id === demand?.id ? " selected" : ""}${selectedDemandIds.includes(item.id) ? " multi-selected" : ""}${item.pinned ? " is-pinned" : ""}`} aria-pressed={selectedDemandIds.includes(item.id)} onDragStart={(event) => { setDraggedDemandId(item.id); event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", item.id); }} onDragEnd={() => setDraggedDemandId("")} onDragOver={demandDragOver} onDrop={(event) => { event.stopPropagation(); moveDemand(item.id, item.groupName || group); }} onClick={(event) => selectDemand(item.id, event)} onContextMenu={(event) => { event.preventDefault(); event.stopPropagation(); const ids = selectedDemandIds.includes(item.id) ? selectedDemandIds : [item.id]; setSelectedDemandIds(ids); setDemandContextMenu({ x: event.clientX, y: event.clientY, ids }); }}><span className="pipeline-demand-dot" data-status={item.status} />{item.unread && <span className="pipeline-demand-unread" title="未读" />}<span className="pipeline-demand-copy"><strong>{item.pinned && <span aria-label="已置顶">⌃ </span>}{demandDisplayTitle(item)}</strong><small>{item.groupName || "未分组"} · {item.owner_group}</small></span></button>)}</div>)}</div>
           {demandContextMenu && <div className="pipeline-demand-context-menu" role="menu" style={{ left: demandContextMenu.x, top: demandContextMenu.y }} onPointerDown={(event) => event.stopPropagation()}><button type="button" onClick={() => renameDemand(demandContextMenu.ids[0])}>重命名</button><button type="button" onClick={() => duplicateDemand(demandContextMenu.ids[0])}>复制项目</button><button type="button" onClick={() => togglePinnedDemand(demandContextMenu.ids[0])}>{contextDemand?.pinned ? "取消置顶" : "置顶"}</button><button type="button" onClick={() => markDemandUnread(demandContextMenu.ids[0])}>标记为未读</button><div role="separator" /><button type="button" onClick={groupSelectedDemands} disabled={demandContextMenu.ids.length < 2}>成组</button><button type="button" className="is-danger" onClick={deleteSelectedDemands} disabled={demandContextMenu.ids.length >= state.demands.length}>删除星轨</button></div>}
         </>}
@@ -1262,7 +1238,6 @@ function PipelineContent() {
                 <div className="pipeline-detail-identity"><span>星轨</span><label>任务名称<input value={demand.title} onChange={(event) => updateDemand({ title: event.target.value })} /></label></div>
                 <label className="pipeline-detail-description">描述<textarea rows={7} value={demand.bug ? demand.bug.details : demand.summary} placeholder="待补充" onChange={(event) => demand.bug ? updateBug("details", event.target.value) : updateDemand({ summary: event.target.value })} /></label>
                 <div className="pipeline-detail-meta"><span><b>状态</b>{demandStatusLabel(demand)}</span><span><b>负责人</b>{demand.owner_group || "待补充"}</span></div>
-                <div className="pipeline-next-actions"><span>下一步</span><button type="button" className="secondary" onClick={enterFocus}>专注处理此星轨</button></div>
               </section>
               <details className="pipeline-more-info"><summary>更多信息</summary><div>
                 <label>分组<input value={demand.groupName || ""} placeholder="未分组" onChange={(event) => updateDemand({ groupName: event.target.value || undefined })} /></label>
@@ -1272,7 +1247,7 @@ function PipelineContent() {
             {selectedStation && <>
               <section className="pipeline-detail-core">
                 <div className="pipeline-detail-identity"><span>站</span><label>名称<input value={selectedStation.title} onChange={(event) => updateStation("title", event.target.value)} /></label></div>
-                <label className="pipeline-detail-description">描述<textarea rows={7} value={selectedStation.description || selectedStation.subtitle} placeholder="待补充" onChange={(event) => updateStation("description", event.target.value)} /></label>
+                <details key={`${demand?.id}:${selectedStation.id}`} className="pipeline-more-info"><summary>流程说明</summary><div><label className="pipeline-detail-description">描述<textarea rows={7} value={selectedStation.description || selectedStation.subtitle} placeholder="待补充" onChange={(event) => updateStation("description", event.target.value)} /></label></div></details>
                 <div className="pipeline-detail-meta"><span><b>状态</b>{selectedStationNodes.length ? `${selectedStationDone}/${selectedStationNodes.length} 已完成` : "空站"}</span><span><b>负责人</b>由站内节点分别负责</span></div>
                 <div className="pipeline-next-actions"><span>下一步</span><button type="button" className="secondary" disabled={!selectedStationNodes.length} onClick={() => autoArrange(selectedStationNodes.map((node) => node.id))}>{selectedStationNodes.length ? "整理站内节点" : "站内暂无节点"}</button></div>
               </section>
@@ -1283,7 +1258,7 @@ function PipelineContent() {
               {demand && <NodeTaskPanel key={`${demand.id}:${selectedNode.id}`} nodeKey={`${demand.id}:${selectedNode.id}`} onApply={updateNodeStatus} />}
               <section className="pipeline-detail-core">
                 <div className="pipeline-detail-identity"><span>{selectedNode.kind === "gate" ? "闸口" : "普通节点"}</span><label>名称<input value={selectedNode.title} onChange={(event) => updateNode("title", event.target.value)} /></label></div>
-                <label className="pipeline-detail-description">描述<textarea rows={8} value={nodeDescriptionValue(selectedNode)} placeholder="填写节点说明与完成证据" onChange={(event) => updateNodeDescription(event.target.value)} /></label>
+                <details key={`${demand?.id}:${selectedNode.id}`} className="pipeline-more-info"><summary>描述与完成证据</summary><div><label className="pipeline-detail-description">描述<textarea rows={8} value={nodeDescriptionValue(selectedNode)} placeholder="填写节点说明与完成证据" onChange={(event) => updateNodeDescription(event.target.value)} /></label></div></details>
                 <div className="pipeline-detail-meta"><label>状态<select value={selectedNode.status} onChange={(event) => updateNodeStatus(event.target.value as NodeStatus)}>{NODE_STATUSES.map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}</select></label><label>负责人<input value={selectedNode.owner} placeholder="待补充" onChange={(event) => updateNode("owner", event.target.value)} /></label></div>
                 {nextNodeAction && <div className="pipeline-next-actions"><span>下一步</span><button type="button" className="secondary" onClick={() => updateNodeStatus(nextNodeAction.status)}>{nextNodeAction.label}</button></div>}
               </section>

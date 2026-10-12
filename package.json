@@ -1,7 +1,7 @@
 {
   "name": "starmap-plugin",
   "private": true,
-  "version": "1.3.0",
+  "version": "1.3.1",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -23,7 +23,7 @@
     "tar": "^7.5.22",
     "typescript": "^5.9.3"
   },
-  "description": "Standalone Starmap workflow board plugin for Grove-compatible desktop clients",
+  "description": "用站、节点和闸口编排星轨，在星图中通过 Being 对话协作推进任务。",
   "repository": {
     "type": "git",
     "url": "https://github.com/chunqing-liu/starmap.git"

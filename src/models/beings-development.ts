@@ -21,7 +21,7 @@ const review = (id: `H${1 | 2 | 3 | 4}`, stationId: string, title: string, owner
 
 export const beingsDevelopmentStations: PipelineStation[] = [
   station("S01", "需求确认", "明确范围、目标与验收条件", ["N01", "H1"]),
-  station("S02", "评审", "检查方案、依赖与验收语义；reviewer 按独立评审流程旁路收件", ["N02", "H2"]),
+  station("S02", "评审", "检查方案、依赖与验收语义；reviewer 按独立评审流程旁路接收消息", ["N02", "H2"]),
   station("S03", "开发准备", "准备执行输入与测试条件", ["N03"]),
   station("S04", "开发", "实现、审查并合并变更", ["N04", "N05", "H3"]),
   station("S05", "测试", "独立执行、修复并完成验收", ["N06", "N07", "H4"]),
@@ -32,7 +32,7 @@ export const beingsDevelopmentNodes: PipelineNode[] = [
   step("N01", "S01", "需求确认", "产品 Agent", "确认需求范围、目标和验收条件。", "ready"),
   review("H1", "S01", "需求确认审核", "产品 Agent", "确认 Agent Team 收到的需求、范围与验收语义。"),
   step("N02", "S02", "方案评审", "产品 Agent", "检查方案、依赖、风险和验收条款。"),
-  review("H2", "S02", "测试设计审核", "测试 Agent", "确认测试设计、测试条件与能力缺口。未确认时 suite 保持 DRAFT，不用于正式验收执行；人工确认语义后可带明确 missing 进入 REVIEWED。reviewer 可按独立评审流程收件核验。"),
+  review("H2", "S02", "测试设计审核", "测试 Agent", "确认测试设计、测试条件与能力缺口。未确认时 suite 保持 DRAFT，不用于正式验收执行；人工确认语义后可带明确 missing 进入 REVIEWED。reviewer 可按独立评审流程核验消息。"),
   step("N03", "S03", "开发准备", "开发 Agent", "准备执行输入、分支、环境和测试条件。"),
   step("N04", "S04", "开发实现", "开发 Agent", "根据已确认的输入完成实现并产出构建证据。"),
   step("N05", "S04", "代码评审", "开发 Agent", "检查变更、自动化结果与版本依据，完成合并。"),
@@ -42,7 +42,7 @@ export const beingsDevelopmentNodes: PipelineNode[] = [
   review("H4", "S05", "最终验收审核", "测试 Agent", "确认真实测试结果与最终验收。"),
   step("N08", "S06", "发布准备", "开发 Agent", "准备发布说明、检查清单与回滚条件。"),
   step("N09", "S06", "发布执行", "开发 Agent", "执行获批发布并读回版本与发布时间。"),
-  step("N10", "S06", "观察与复盘", "coordinator", "观察发布结果，记录结论与后续行动。复盘按真实运行评测口径：指标从完整实际事件计算，不从收件文件数估造；正确阻塞不算 Agent 失败。"),
+  step("N10", "S06", "观察与复盘", "coordinator", "观察发布结果，记录结论与后续行动。复盘按真实运行评测口径：指标从完整实际事件计算，不从消息文件数估造；正确阻塞不算 Agent 失败。"),
 ];
 
 export const beingsDevelopmentTransitions: PipelineTransition[] = [
