@@ -2,6 +2,12 @@ import type { GroveSDK } from '@beings/grove-plugin-sdk';
 declare global { interface Window { grove: GroveSDK } }
 let values: Record<string, string> = Object.create(null);
 let saveRevision = 0;
+let pendingSave = Promise.resolve();
+function persist(patch: Record<string, string | null>) {
+  const saving = pendingSave.then(() => window.grove.updateData(patch));
+  pendingSave = saving.catch(() => {});
+  return saving;
+}
 function status(text: string) { const element = document.getElementById('plugin-status'); if (element) element.textContent = text; }
 export async function initializeStorage() {
   const data = await window.grove.loadData();
@@ -16,9 +22,24 @@ export const pluginStorage = {
     values[key] = value;
     const revision = ++saveRevision;
     status('正在保存…');
-    void window.grove.updateData({ [key]: value }).then(() => { if (revision === saveRevision) status('已保存到本机'); }, error => {
+    void persist({ [key]: value }).then(() => { if (revision === saveRevision) status('已保存到本机'); }, error => {
       status(`保存失败：${error instanceof Error ? error.message : '请重试'}。请保留页面并继续编辑以重试保存。`);
     });
+  },
+  async setItems(patch: Record<string, string | null>) {
+    const revision = ++saveRevision;
+    status('正在保存…');
+    try {
+      await persist(patch);
+      for (const [key, value] of Object.entries(patch)) {
+        if (value === null) delete values[key];
+        else values[key] = value;
+      }
+      if (revision === saveRevision) status('已保存到本机');
+    } catch (error) {
+      status(`保存失败：${error instanceof Error ? error.message : '请重试'}。`);
+      throw error;
+    }
   },
 };
 let toastTimer: ReturnType<typeof setTimeout> | undefined;

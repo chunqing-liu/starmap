@@ -1,14 +1,16 @@
 {
   "name": "starmap-plugin",
   "private": true,
-  "version": "1.3.1",
+  "version": "1.4.0",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "verify:package": "node scripts/verify-package.mjs",
-    "check": "npm run typecheck && npm run build && npm run verify:package"
+    "test:team-sync": "node --test tests/team-sync.test.mjs",
+    "test:team-sync-ui": "node tests/team-sync-ui.mjs",
+    "check": "npm run typecheck && npm run test:team-sync && npm run build && npm run verify:package"
   },
   "dependencies": {
     "@xyflow/react": "12.11.6",

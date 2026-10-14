@@ -814,7 +814,14 @@ function PipelineContent() {
     return [...groups.entries()];
   }, [visibleDemands, demandGroupBy]);
 
-  useEffect(() => { try { pluginStorage.setItem(PIPELINE_STORAGE_KEY, JSON.stringify(sanitizePipelineState(state))); } catch { /* 本地缓存失败不阻塞星图。 */ } }, [state]);
+  useEffect(() => { try { const saved = JSON.stringify(sanitizePipelineState(state)); if (pluginStorage.getItem(PIPELINE_STORAGE_KEY) !== saved) pluginStorage.setItem(PIPELINE_STORAGE_KEY, saved); } catch { /* 本地缓存失败不阻塞星图。 */ } }, [state]);
+
+  const loadTeamState = (next: PipelineLocalState) => {
+    historyRef.current = { past: [], future: [], restoring: false };
+    setSelectedItemIds([]); setSelectedDemandIds([]); setDemandContextMenu(null);
+    setDemandQuery(''); setDemandFilter('all');
+    setState(next);
+  };
   useEffect(() => {
     try { pluginStorage.setItem(SIDEBAR_WIDTHS_STORAGE_KEY, JSON.stringify(sidebarWidths)); } catch { /* 宽度偏好失败不阻塞星图。 */ }
   }, [sidebarWidths]);
@@ -1196,7 +1203,7 @@ function PipelineContent() {
         <select value={demandGroupBy} onChange={(event) => setDemandGroupBy(event.target.value as typeof demandGroupBy)} aria-label="星轨分组方式"><option value="group">按分组</option><option value="status">按状态</option></select>
       </div>
       <div className="pipeline-toolbar-actions">
-        <PipelineConnections context={`星轨：${demand ? demandDisplayTitle(demand) : '未选择'}\n${selectedNode ? `节点：${selectedNode.title}\n状态：${selectedNode.status}\n说明：${selectedNode.description}` : '未选择节点'}`} />
+        <PipelineConnections onStateLoaded={loadTeamState} context={`星轨：${demand ? demandDisplayTitle(demand) : '未选择'}\n${selectedNode ? `节点：${selectedNode.title}\n状态：${selectedNode.status}\n说明：${selectedNode.description}` : '未选择节点'}`} />
       </div>
       <button type="button" className="pipeline-rail-toggle pipeline-rail-toggle-right" onClick={() => setRightCollapsed((value) => !value)} aria-label={rightCollapsed ? "展开右侧详情栏" : "收起右侧详情栏"} aria-expanded={!rightCollapsed} title={rightCollapsed ? "展开详情" : "收起详情"}>
         <RailToggleIcon direction={rightCollapsed ? "left" : "right"} testId="pipeline-right-rail-icon" />

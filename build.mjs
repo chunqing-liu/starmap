@@ -13,7 +13,7 @@ if (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME !== `v$
 await mkdir(output, { recursive: true });
 const result = await build({ absWorkingDir: directory, entryPoints: ['src/main.tsx'], bundle: true,
   outfile: 'index.js', write: false, minify: true, format: 'iife', target: 'chrome120',
-  define: { 'process.env.NODE_ENV': '"production"' }, legalComments: 'inline' });
+  define: { 'process.env.NODE_ENV': '"production"', '__STARMAP_VERSION__': JSON.stringify(metadata.version) }, legalComments: 'inline' });
 const js = result.outputFiles.find(f => f.path.endsWith('.js')).text.replace(/<\/script/gi, '<\\/script');
 const css = result.outputFiles.find(f => f.path.endsWith('.css'))?.text || '';
 const license = await readFile(path.join(directory, 'LICENSE'), 'utf8');

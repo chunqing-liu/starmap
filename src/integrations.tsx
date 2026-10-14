@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { pluginStorage } from './host';
+import { TeamSyncSettings } from './team-sync-ui';
+import type { PipelineLocalState } from './models/schema';
 
 const preferenceKey = 'pipeline:assist-instruction';
 const defaultInstruction = '请分析当前任务，给出下一步行动、风险和验收建议。';
-export function PipelineConnections({ context }: { context: string }) {
+export function PipelineConnections({ context, onStateLoaded }: { context: string; onStateLoaded(state: PipelineLocalState): void }) {
   const [open, setOpen] = useState(false);
   const [being, setBeing] = useState(''), [busy, setBusy] = useState(false), [result, setResult] = useState('');
   const [instruction, setInstruction] = useState(pluginStorage.getItem(preferenceKey) || defaultInstruction);
@@ -37,6 +39,7 @@ export function PipelineConnections({ context }: { context: string }) {
         <p>发送时会附上当前星轨和选中节点。客户端会展示完整消息，确认后发送。</p>
         <button type="button" onClick={() => { const value = instruction.trim() || defaultInstruction; pluginStorage.setItem(preferenceKey, value); setInstruction(value); }}>保存设置</button>
       </div>
+      <TeamSyncSettings onStateLoaded={onStateLoaded} />
     </section>}
   </div>;
 }
