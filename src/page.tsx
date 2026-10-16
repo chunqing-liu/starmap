@@ -3,6 +3,13 @@ import "./base.css";
 import "./v4.css";
 import { PipelineConnections } from './integrations';
 import { NodeTaskPanel } from './workspace';
+import { networkSession } from './network-session';
+import { NetworkSyncBar } from './network-sync-ui';
+import { deletionProtected } from './edit-policy';
+import { recordActivity } from './activity';
+import { findVacantPosition } from './placement';
+import { ActivityOverview, NodeActivityPanel } from './activity-ui';
+import './network-sync.css';
 import {
   applyEdgeChanges,
   applyNodeChanges,
@@ -59,8 +66,6 @@ import {
   demandStations,
   demandTransitions,
   getPipelineFlow,
-  loadPipelineState,
-  PIPELINE_STORAGE_KEY,
   pipelineFlows,
   sanitizePipelineState,
 } from "./models/templates";
@@ -394,13 +399,13 @@ function PipelineCanvas({
       return {
         id: station.id, type: "station", position: stationPositionById.get(station.id)!, selected: selectedItemIds.includes(station.id),
         data: { item: station, compact, count: stationNodes.length, summary: `${done}/${stationNodes.length} 已完成`, stationLinked, stationChainBroken },
-        style: { width: size.width, height: size.height }, zIndex: 0,
+        width: size.width, height: size.height, style: { width: size.width, height: size.height }, zIndex: 0,
       } satisfies FlowNode;
     });
     nodes.forEach((item) => {
       const hiddenInCompactStation = compact && Boolean(item.stationId);
       result.push({
-        id: item.id, type: "item", position: visibleNodePosition(item, positions, stationPositionById), selected: selectedItemIds.includes(item.id),
+        id: item.id, type: "item", position: visibleNodePosition(item, positions, stationPositionById), selected: selectedItemIds.includes(item.id), width: NODE_WIDTH, height: NODE_HEIGHT,
         data: {
           item, detailed, attention: attentionFor(item),
         }, selectable: !hiddenInCompactStation,
@@ -515,7 +520,7 @@ function PipelineCanvas({
     latestById.set(dragged.id, dragged);
     const moving = currentNodes.filter((node) => node.type === "item" && node.selected);
     if (!moving.some((node) => node.id === dragged.id)) moving.splice(0, moving.length, dragged);
-    // P15：先算落点归属。同站拖动不得改变 nodeIds 顺序——否则站内拖一下首/尾节点就会跳到队尾，锚定虚线跟着跳变（2026-09-24 醇青反馈）。
+    // P15：先算落点归属。同站拖动不得改变 nodeIds 顺序——否则站内拖一下首/尾节点就会跳到队尾，锚定虚线跟着跳变。
     const targetByMovingId = new Map<string, PipelineStation | null>();
     moving.forEach((movingNode) => {
       const latest = latestById.get(movingNode.id) || movingNode;
@@ -648,7 +653,12 @@ function PipelineCanvas({
     const center = screenToFlowPosition({ x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 });
     const width = kind === "station" ? STATION_MIN_WIDTH : NODE_WIDTH;
     const height = kind === "station" ? STATION_EMPTY_HEIGHT : NODE_HEIGHT;
-    onCreateItem(kind, { x: center.x - width / 2, y: center.y - height / 2 });
+    const obstacles = getNodes().filter(node => !node.hidden).map(node => ({
+      ...node.position,
+      width: node.measured?.width || node.width || (isStationNode(node) ? STATION_MIN_WIDTH : NODE_WIDTH),
+      height: node.measured?.height || node.height || (isStationNode(node) ? STATION_EMPTY_HEIGHT : NODE_HEIGHT),
+    }));
+    onCreateItem(kind, findVacantPosition({ x: center.x - width / 2, y: center.y - height / 2, width, height }, obstacles));
   };
 
   const selectedCanvasIds = () => getNodes().filter((node) => node.selected).map((node) => node.id);
@@ -771,7 +781,8 @@ function PipelineCanvas({
 }
 
 function PipelineContent() {
-  const [state, setState] = useState<PipelineLocalState>(() => loadPipelineState());
+  const [sync, setSync] = useState(() => networkSession());
+  const [state, setState] = useState<PipelineLocalState>(() => sync.snapshot().draft);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(true);
@@ -814,12 +825,13 @@ function PipelineContent() {
     return [...groups.entries()];
   }, [visibleDemands, demandGroupBy]);
 
-  useEffect(() => { try { const saved = JSON.stringify(sanitizePipelineState(state)); if (pluginStorage.getItem(PIPELINE_STORAGE_KEY) !== saved) pluginStorage.setItem(PIPELINE_STORAGE_KEY, saved); } catch { /* 本地缓存失败不阻塞星图。 */ } }, [state]);
+  useEffect(() => { void sync.stage(state).catch(() => {}); }, [state, sync]);
 
   const loadTeamState = (next: PipelineLocalState) => {
     historyRef.current = { past: [], future: [], restoring: false };
     setSelectedItemIds([]); setSelectedDemandIds([]); setDemandContextMenu(null);
     setDemandQuery(''); setDemandFilter('all');
+    setCommentState({ demandId: next.selectedDemandId, items: loadPipelineComments(next.selectedDemandId) });
     setState(next);
   };
   useEffect(() => {
@@ -858,7 +870,7 @@ function PipelineContent() {
       historyRef.current.past = [...historyRef.current.past, structuredClone(current)].slice(-30);
       historyRef.current.future = [];
     }
-    return sanitizePipelineState({ ...next, board: { ...next.board, revision: next.board.revision + 1 } });
+    return sanitizePipelineState(recordActivity(current, { ...next, board: { ...next.board, revision: next.board.revision + 1 } }));
   });
   const restoreHistory = (direction: "undo" | "redo") => {
     const history = historyRef.current;
@@ -874,7 +886,7 @@ function PipelineContent() {
       history.past = [...history.past, structuredClone(current)].slice(-30);
     }
     history.restoring = true;
-    setState(sanitizePipelineState(structuredClone(target)));
+    setState(sanitizePipelineState(recordActivity(current, { ...structuredClone(target), board: { ...target.board, revision: current.board.revision + 1 } })));
     history.restoring = false;
     setSelectedItemIds([]);
     setSelectedDemandIds([target.selectedDemandId]);
@@ -903,6 +915,7 @@ function PipelineContent() {
 
   const updateNode = <K extends keyof NodeOverride>(field: K, value: NodeOverride[K]) => {
     if (!selectedNode || !demand) return;
+    if (field === 'kind' && selectedNode.kind === 'gate' && value !== 'gate') return;
     const nodeOverrides = { ...demand.nodeOverrides, [selectedNode.id]: { ...demand.nodeOverrides[selectedNode.id], [field]: value } };
     if (field !== "stationId") { updateDemand({ nodeOverrides }); return; }
     const stationId = typeof value === "string" && value ? value : null;
@@ -933,14 +946,7 @@ function PipelineContent() {
 
   const validateNodeStatus = (node: PipelineNode, status: NodeStatus) => {
     if (!demand) return false;
-    if (!["pending", "waiting_human"].includes(status)) {
-      const blocker = demandTransitions(flow, demand).filter((transition) => transition.toNode === node.id)
-        .map((transition) => nodes.find((candidate) => candidate.id === transition.fromNode))
-        .find((candidate) => candidate?.kind === "gate" && (candidate.status !== "done" || !isDefined(candidate.approver) || !isDefined(candidate.evidence)));
-      if (blocker) { pluginToast(`下游节点必须等待闸口「${blocker.title}」通过。`); return false; }
-    }
     if (status === "done" && !isDefined(node.evidence) && !isDefined(node.description)) { pluginToast(`节点「${node.title}」完成前必须填写描述。`); return false; }
-    if (status === "done" && node.kind === "gate" && !isDefined(node.approver)) { pluginToast(`闸口「${node.title}」通过前必须填写拍板人。`); return false; }
     return true;
   };
   const updateNodeStatus = (status: NodeStatus) => {
@@ -1023,9 +1029,9 @@ function PipelineContent() {
 
   const deleteItems = (ids: string[]) => {
     if (!demand || !ids.length) return;
-    const locked = [...nodes, ...stations].filter((item) => ids.includes(item.id) && item.locked);
+    const locked = [...nodes, ...stations].filter((item) => ids.includes(item.id) && deletionProtected(item));
     const deletable = ids.filter((id) => !locked.some((item) => item.id === id));
-    if (locked.length) pluginToast(`已跳过 ${locked.length} 个结构锁定项。`);
+    if (locked.length) pluginToast('已跳过 ' + locked.length + ' 个闸口或结构锁定项。');
     if (!deletable.length) return;
     const deletingStations = new Set(stations.filter((station) => deletable.includes(station.id)).map((station) => station.id));
     const deletingNodes = new Set(nodes.filter((node) => deletable.includes(node.id)).map((node) => node.id));
@@ -1136,7 +1142,7 @@ function PipelineContent() {
   const duplicateDemand = (id: string) => {
     const source = state.demands.find((item) => item.id === id);
     if (!source) return;
-    const copy = { ...structuredClone(source), id: `star-track-${crypto.randomUUID()}`, title: `${source.title} 副本`, pinned: false, unread: true, sortOrder: Math.max(-1, ...state.demands.map((item) => item.sortOrder)) + 1 };
+    const copy = { ...structuredClone(source), activityEvents: [], id: `star-track-${crypto.randomUUID()}`, title: `${source.title} 副本`, pinned: false, unread: true, sortOrder: Math.max(-1, ...state.demands.map((item) => item.sortOrder)) + 1 };
     changeState((current) => ({ ...current, demands: [...current.demands, copy], selectedDemandId: copy.id }));
     setSelectedDemandIds([copy.id]); setSelectedItemIds([]); setDemandContextMenu(null);
   };
@@ -1209,6 +1215,8 @@ function PipelineContent() {
         <RailToggleIcon direction={rightCollapsed ? "left" : "right"} testId="pipeline-right-rail-icon" />
       </button>
     </header>
+    <NetworkSyncBar sync={sync} onStateLoaded={loadTeamState} onSessionChanged={next => { setSync(next); loadTeamState(next.snapshot().draft); }} />
+    {demand && <ActivityOverview key={sync.key + ':' + demand.id} demand={demand} nodes={nodes} stations={stations} onSelect={id => handleCanvasSelectionChange([id])} />}
     <div className={`pipeline-shell star-map-shell${leftCollapsed ? " left-collapsed" : ""}${rightCollapsed ? " right-collapsed" : ""}`} style={{ "--pipeline-left": `${leftCollapsed ? 0 : sidebarWidths.left}px`, "--pipeline-right": `${rightCollapsed ? 0 : sidebarWidths.right}px` } as CSSProperties}>
       <aside className={`pipeline-demands${leftCollapsed ? " is-collapsed" : ""}`} aria-label="星轨">
         {!leftCollapsed && <div className="pipeline-sidebar-resize-handle pipeline-sidebar-resize-handle-left" role="separator" aria-orientation="vertical" aria-label="调整左侧星轨栏宽度" onPointerDown={(event) => startSidebarResize("left", event)} />}
@@ -1262,20 +1270,22 @@ function PipelineContent() {
               <CommentSection key={`station:${selectedStation.id}`} comments={targetComments} currentUserId={state.board.currentUserId} onSubmit={(content) => addComment("station", selectedStation.id, content)} />
             </>}
             {selectedNode && <>
-              {demand && <NodeTaskPanel key={`${demand.id}:${selectedNode.id}`} nodeKey={`${demand.id}:${selectedNode.id}`} onApply={updateNodeStatus} />}
+              {demand && <NodeTaskPanel key={sync.key + ":" + `${demand.id}:${selectedNode.id}`} nodeKey={`${demand.id}:${selectedNode.id}`} onApply={updateNodeStatus} />}
+              {demand && <NodeActivityPanel demand={demand} node={selectedNode} />}
               <section className="pipeline-detail-core">
                 <div className="pipeline-detail-identity"><span>{selectedNode.kind === "gate" ? "闸口" : "普通节点"}</span><label>名称<input value={selectedNode.title} onChange={(event) => updateNode("title", event.target.value)} /></label></div>
                 <details key={`${demand?.id}:${selectedNode.id}`} className="pipeline-more-info"><summary>描述与完成证据</summary><div><label className="pipeline-detail-description">描述<textarea rows={8} value={nodeDescriptionValue(selectedNode)} placeholder="填写节点说明与完成证据" onChange={(event) => updateNodeDescription(event.target.value)} /></label></div></details>
                 <div className="pipeline-detail-meta"><label>状态<select value={selectedNode.status} onChange={(event) => updateNodeStatus(event.target.value as NodeStatus)}>{NODE_STATUSES.map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}</select></label><label>负责人<input value={selectedNode.owner} placeholder="待补充" onChange={(event) => updateNode("owner", event.target.value)} /></label></div>
                 {nextNodeAction && <div className="pipeline-next-actions"><span>下一步</span><button type="button" className="secondary" onClick={() => updateNodeStatus(nextNodeAction.status)}>{nextNodeAction.label}</button></div>}
+                <label>负责 Being 地址（可并行，逗号分隔）<input key={selectedNode.id} aria-label="负责 Being 地址" defaultValue={(selectedNode.responsibleBeingIds || []).join(', ')} placeholder="t_…，不从负责人名称猜测" onChange={event => updateNode('responsibleBeingIds', event.target.value.split(/[,，]/).map(value => value.trim()).filter(Boolean))} /></label>
               </section>
               <details className="pipeline-more-info"><summary>更多信息</summary><div>
-                <label>类型<select value={selectedNode.kind} disabled={Boolean(selectedNode.locked)} onChange={(event) => updateNode("kind", event.target.value as NodeOverride["kind"])}><option value="node">普通节点</option><option value="gate">闸口</option></select></label>
+                <label>类型<select aria-label="类型" value={selectedNode.kind} disabled={deletionProtected(selectedNode)} onChange={(event) => updateNode("kind", event.target.value as NodeOverride["kind"])}><option value="node">普通节点</option><option value="gate">闸口</option></select></label>
                 <label>审核/操作分配给<input value={selectedNode.assigned_user || ""} placeholder="未分配" onChange={(event) => updateNode("assigned_user", event.target.value)} /></label>
                 {selectedNode.kind === "gate" && <label>拍板人<input value={selectedNode.approver || ""} placeholder="待补充" onChange={(event) => updateNode("approver", event.target.value)} /></label>}
                 <dl className="pipeline-facts"><div><dt>执行主体</dt><dd>{selectedNode.execution || "待补充"}</dd></div><div><dt>触发</dt><dd>{selectedNode.trigger.join(" / ") || "待补充"}</dd></div><div><dt>退出证据</dt><dd>{selectedNode.evidenceLevel || "待补充"}</dd></div></dl>
                 <button type="button" className="secondary" onClick={() => markNodesUpdated([selectedNode.id])}>标记有更新</button>
-                <button type="button" className="pipeline-delete" disabled={Boolean(selectedNode.locked)} onClick={() => deleteItems(selectedItemIds)}>{selectedNode.locked ? "结构规则锁定，不可删除" : "删除当前节点"}</button>
+                <button type="button" className="pipeline-delete" disabled={deletionProtected(selectedNode)} onClick={() => deleteItems(selectedItemIds)}>{deletionProtected(selectedNode) ? "闸口或结构规则保护，不可删除" : "删除当前节点"}</button>
               </div></details>
               <CommentSection key={`node:${selectedNode.id}`} comments={targetComments} currentUserId={state.board.currentUserId} onSubmit={(content) => addComment("node", selectedNode.id, content)} />
             </>}

@@ -1,7 +1,7 @@
 {
   "name": "starmap-plugin",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.5.0",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -10,7 +10,17 @@
     "verify:package": "node scripts/verify-package.mjs",
     "test:team-sync": "node --test tests/team-sync.test.mjs",
     "test:team-sync-ui": "node tests/team-sync-ui.mjs",
-    "check": "npm run typecheck && npm run test:team-sync && npm run build && npm run verify:package"
+    "test:network": "node --test --test-concurrency=1 tests/network-sync.test.mjs tests/host-network.test.mjs tests/host-http-redirects.test.mjs tests/desktop-backend.test.mjs",
+    "test:activity": "node --test tests/activity-reminders.test.mjs",
+    "test:activity-ui": "node tests/activity-ui.mjs",
+    "test:autosync": "node --test --test-concurrency=1 tests/auto-sync.test.mjs tests/host-storage.test.mjs",
+    "test:autosync-ui": "node tests/auto-sync-ui.mjs",
+    "test:geometry": "node --test tests/placement.test.mjs",
+    "test:branches": "node --test tests/branch-sync.test.mjs tests/gitlab-compat.test.mjs",
+    "prepare:real-connection": "node scripts/prepare-real-connection.mjs",
+    "test:desktop-integration": "node tests/desktop-integration.mjs",
+    "test:desktop-stability": "node tests/desktop-integration.mjs --stability",
+    "check": "npm run typecheck && npm run test:team-sync && npm run test:network && npm run test:activity && npm run test:autosync && npm run test:geometry && npm run test:branches && npm run build && npm run verify:package"
   },
   "dependencies": {
     "@xyflow/react": "12.11.6",

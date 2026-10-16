@@ -13,8 +13,9 @@ export type PluginTaskStatus = 'queued' | 'running' | 'done' | 'failed' | 'cance
 export interface PluginTask { id: string; status: PluginTaskStatus; createdAt: number; endedAt?: number }
 export interface PluginTaskSnapshot { scopeId: string; sceneId: string; tasks: PluginTask[]; ready: boolean; configured: boolean; enabled: boolean }
 export interface GroveSDK {
+  network: { fetch(url: string, init?: { method?: string; headers?: HeadersInit; body?: string }): Promise<Response> };
   readonly apiVersion: 1;
-  readonly sdkVersion: '1.3.0';
+  readonly sdkVersion: '1.5.0';
   readonly view: string;
   readonly command?: string;
   readonly slot?: string;

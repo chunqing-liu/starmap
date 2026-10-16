@@ -48,6 +48,6 @@ export function NodeTaskPanel({ nodeKey, onApply }: { nodeKey: string; onApply: 
       {task && <button type="button" onClick={() => onApply(taskNodeStatus[task.status])}>应用任务状态到节点</button>}
       <button type="button" disabled={!snapshot} onClick={() => bind('')}>解除任务关联</button>
     </>}
-    <p className="pipeline-task-help">任务状态实时更新。应用到节点时仍需满足流程闸口和验收规则。</p>
+    <p className="pipeline-task-help">任务状态实时更新。闸口防止误删，推进由团队流程约定，不按指定拍板人强制审批。</p>
   </section>;
 }

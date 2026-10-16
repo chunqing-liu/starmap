@@ -1,0 +1,18 @@
+.pipeline-network-sync { flex: 0 0 auto; max-height: 50%; overflow: auto; padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 12px; background: var(--panel, #f8fafc); }
+.pipeline-network-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.pipeline-network-target { margin: 0 0 7px; padding: 7px 10px; border-left: 3px solid #2563eb; background: color-mix(in srgb, #2563eb 10%, transparent); overflow-wrap: anywhere; }
+.pipeline-network-summary > span { flex: 1; min-width: 180px; }
+.pipeline-network-sync button { padding: 5px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel, #fff); color: inherit; cursor: pointer; }
+.pipeline-network-sync button:disabled { opacity: .5; cursor: not-allowed; }
+.pipeline-network-warning { margin: 7px 0 0; padding: 7px 10px; border-left: 3px solid #ca8a04; background: color-mix(in srgb, #eab308 15%, transparent); }
+.pipeline-network-sync.is-conflict, .pipeline-network-sync.is-unknown { border-bottom-color: #dc2626; }
+.pipeline-network-settings, .pipeline-network-conflicts { max-height: 38vh; overflow: auto; margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+.pipeline-network-settings input, .pipeline-network-settings select, .pipeline-network-conflicts select { max-width: 100%; box-sizing: border-box; margin: 4px 8px; padding: 5px; color: inherit; background: var(--panel, #fff); border: 1px solid var(--line); border-radius: 5px; }
+.pipeline-network-login { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+.pipeline-network-login label { display: flex; flex: 1 1 180px; flex-direction: column; min-width: 0; }
+.pipeline-network-login input { width: 100%; margin: 4px 0; }
+.pipeline-network-login p { flex-basis: 100%; }
+.pipeline-network-settings p, .pipeline-network-summary span, .pipeline-network-conflicts code { overflow-wrap: anywhere; }
+.pipeline-network-summary > strong { max-width: 100%; overflow-wrap: anywhere; }
+.pipeline-network-conflicts label { display: block; padding: 6px; border-bottom: 1px solid var(--line); }
+.pipeline-network-conflicts pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 160px; overflow: auto; }

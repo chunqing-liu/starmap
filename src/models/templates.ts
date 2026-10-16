@@ -19,7 +19,7 @@ export const blankPipeline: PipelineFlow = {
 export const lightPipeline: PipelineFlow = {
   id: "light-star-track", name: "轻流程", version: "v1-light",
   source: "src/models/templates.ts", groupName: "默认组",
-  description: "待办站 → 进行中站 → 完成站；通用闸口可按需保留或删除。",
+  description: "待办站 → 进行中站 → 完成站；通用闸口保护删除，可编辑流程。",
   stations: [
     { id: "L-S01", kind: "station", title: "待办", subtitle: "明确任务", nodeIds: ["L-N01"] },
     { id: "L-S02", kind: "station", title: "进行中", subtitle: "推进任务，按需过闸", nodeIds: ["L-N02", "L-G01"] },
@@ -31,7 +31,7 @@ export const lightPipeline: PipelineFlow = {
     { id: "L-N02", kind: "node", stationId: "L-S02", title: "处理任务", status: "pending",
       owner: "待补充", owner_group: "产品交付组", description: "推进任务并记录处理结果。", trigger: ["事件"], execution: "being" },
     { id: "L-G01", kind: "gate", gateRole: "custom", stationId: "L-S02", title: "通用闸口（可选）", status: "pending",
-      owner: "待补充", owner_group: "产品交付组", description: "需要确认时填写拍板人与完成证据；不需要时可删除此闸口。",
+      owner: "待补充", owner_group: "产品交付组", description: "需要确认时填写拍板人与完成证据；闸口不可删除，但不增加硬审批权限。",
       trigger: ["人工"], execution: "being+人", requires_human_review: true, options: ["通过", "退回"] },
     { id: "L-N03", kind: "node", stationId: "L-S03", title: "记录结果", status: "pending",
       owner: "待补充", owner_group: "产品交付组", description: "记录任务结果与完成证据。", trigger: ["事件"], execution: "being" },
@@ -114,7 +114,7 @@ const PIPELINE_LEGACY_STORAGE_KEYS = ["beings:star-map:v3", "beings:pipeline-boa
 
 export function createInitialPipelineState(): PipelineLocalState {
   return { schemaVersion: 4, board: {
-    id: "star-map-chunqing-main", name: "醇青的星图", version: "v6", sourceBoardId: "待补充",
+    id: "star-map-default", name: "我的星图", version: "v6", sourceBoardId: "待补充",
     sourceVersion: "pipeline/v6-requirements", branchName: "main", ownerGroup: "产品交付组",
     currentUserId: LOCAL_USER_ID, revision: 1,
   }, selectedDemandId: defaultDemand.id, demands: [structuredClone(defaultDemand), structuredClone(defaultBugDemand)] };
@@ -154,7 +154,7 @@ function normalizeBug(value: unknown): BugIssue | undefined {
     priority, status, assignee: typeof value.assignee === "string" ? value.assignee : "",
     details: typeof value.details === "string" ? value.details : "",
     attachments: Array.isArray(value.attachments) ? value.attachments.filter((item): item is string => typeof item === "string") : [],
-    history: history.length ? history : [{ status, at: new Date().toISOString(), content: "恢复 Bug 状态记录。" }],
+    history,
   };
 }
 
@@ -184,7 +184,7 @@ function normalizeDemand(value: unknown, fallbackOrder = 0): Demand | null {
   const title = isLegacyBugDefault ? "bug 修复" : value.title;
   const groupName = typeof value.groupName === "string" && value.groupName === "bug 修复组" ? "bug 修复" : value.groupName;
   const normalizedStationLinks = normalizeStationLinks(value.stationLinks);
-  const stationLinks = workflowId === defaultPipeline.id && normalizedStationLinks.length === 0
+  const stationLinks = workflowId === defaultPipeline.id && !Array.isArray(value.stationLinks)
     ? stationLinksFromFlow(flow) : normalizedStationLinks;
   return {
     ...structuredClone(editableDefaults),
@@ -201,6 +201,7 @@ function normalizeDemand(value: unknown, fallbackOrder = 0): Demand | null {
     unread: value.unread === true,
     bug: normalizeBug(value.bug),
     nodeStates,
+    ...(Array.isArray(value.activityEvents) ? { activityEvents: value.activityEvents as Demand["activityEvents"] } : {}),
     nodeOverrides: isRecord(value.nodeOverrides) ? value.nodeOverrides as Demand["nodeOverrides"] : {},
     stationOverrides: isRecord(value.stationOverrides) ? value.stationOverrides as Demand["stationOverrides"] : {},
     customNodes: Array.isArray(value.customNodes) ? value.customNodes.filter(isRecord) as unknown as PipelineNode[] : [],

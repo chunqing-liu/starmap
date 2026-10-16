@@ -90,6 +90,7 @@ export interface PipelineNode {
   title: string;
   status: NodeStatus;
   owner: string;
+  responsibleBeingIds?: string[];
   owner_group: string;
   description: string;
   trigger: Trigger[];
@@ -174,11 +175,22 @@ export interface PipelineFlow {
 
 export type NodeOverride = Partial<Pick<
   PipelineNode,
-  "title" | "owner" | "description" | "kind" | "stationId" | "parentNodeId" |
+  "title" | "owner" | "responsibleBeingIds" | "description" | "kind" | "stationId" | "parentNodeId" |
   "trigger" | "execution" | "evidence" | "approver" | "gateRole" |
   "requires_human_review" | "assigned_user" | "update_seq" | "last_seen_seq"
 >>;
 export type StationOverride = Partial<Pick<PipelineStation, "title" | "subtitle" | "description" | "nodeIds">>;
+
+export interface NodeActivityEvent {
+  id: string;
+  nodeId: string;
+  from: NodeStatus;
+  to: NodeStatus;
+  at: string;
+  previousEventId: string | null;
+  stationId: string | null;
+  previousStationId: string | null;
+}
 
 export interface Demand {
   id: string;
@@ -198,6 +210,7 @@ export interface Demand {
   /** bug 修复组的 Jira 兼容字段与状态历史。 */
   bug?: BugIssue;
   nodeStates: Partial<Record<string, NodeStatus>>;
+  activityEvents?: NodeActivityEvent[];
   nodeOverrides: Record<string, NodeOverride>;
   stationOverrides: Record<string, StationOverride>;
   customNodes: PipelineNode[];

@@ -70,8 +70,8 @@ export function TeamSyncSettings({ onStateLoaded }: { onStateLoaded(state: Pipel
   }
   return <section className="pipeline-sdk-preferences pipeline-team-sync" aria-label="团队同步（文件交换）">
     <h4>团队同步（文件交换）</h4>
-    <p>插件运行在隔离沙箱内，无法直接联网；团队共享通过文件完成。</p>
-    <p>导出你的星图，交给 Being 或伙伴提交到团队仓库；导入团队包更新本地星图。应用前自动备份，可随时恢复最近一次导入前的数据。</p>
+    <p>旧版文件交换保留为离线备份和迁移工具，不是联网同步；联网状态与读写使用顶部「团队联网同步」。</p>
+    <p>团队包不含凭据。导入会修改当前本地草稿，导入前自动备份；恢复后仍需拉取并核对联网冲突，不会自动上传。</p>
     <div className="pipeline-sdk-actions">
       <button type="button" disabled={busy} onClick={() => {
         setError('');

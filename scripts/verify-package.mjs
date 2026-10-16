@@ -25,5 +25,9 @@ const parser = list({ onReadEntry(entry) {
 } });
 await new Promise((resolve, reject) => { parser.on('end', resolve); parser.on('error', reject); parser.end(bundle); });
 assert.deepEqual([...files.keys()].sort(), ['LICENSE', 'PLUGIN_NOTICES.md', 'README.md', 'THIRD_PARTY_NOTICES', 'desktop.plugin.json', 'index.html'].sort());
-for (const [name, chunks] of files) assert(Buffer.concat(chunks).equals(await readFile(new URL(`dist/${name}`, root))), `Archive content differs: ${name}`);
+for (const [name, chunks] of files) {
+  const content = Buffer.concat(chunks);
+  assert(content.equals(await readFile(new URL(`dist/${name}`, root))), `Archive content differs: ${name}`);
+  assert(!content.toString('utf8').includes('\r'), `Normalize packaged text line endings: ${name}`);
+}
 console.log(`PASS: ${manifest.name} v${manifest.version}; self-contained HTML, package contents and checksum verified.`);

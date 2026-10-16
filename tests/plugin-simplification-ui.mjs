@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
 
 const require = createRequire(import.meta.url);
@@ -57,7 +57,11 @@ try {
       ui: { navigate: async location => { window.testCalls.push({ type: 'navigate', location }); } },
     };
   }, { storageKey: key, initial: models.createInitialPipelineState() });
-  await page.goto(new URL('../dist/index.html', import.meta.url).href);
+  await page.goto(process.env.STARMAP_UI_HTML_PATH ? pathToFileURL(process.env.STARMAP_UI_HTML_PATH).href : new URL('../dist/index.html', import.meta.url).href);
+  const network = page.locator('[aria-label="团队联网同步"]');
+  assert(await network.getByText(/尚未同步到团队/).isVisible());
+  assert(await network.getByRole('button', { name: '拉取团队数据', exact: true }).isDisabled());
+  assert(await network.getByRole('button', { name: '登录 / 联网设置', exact: true }).isVisible());
   const collaboration = page.getByRole('button', { name: '协作', exact: true });
   await collaboration.waitFor();
   assert.equal(await page.getByRole('button', { name: /专注/ }).count(), 0);
@@ -145,17 +149,20 @@ try {
   record('轻流程可新建；节点说明默认折叠且可编辑；八态文案和节点任务关联通过');
   await selectNode('L-N03');
   await statusSelect.selectOption('running');
-  assert.equal(await statusSelect.inputValue(), 'pending');
+  assert.equal(await statusSelect.inputValue(), 'running');
   await selectNode('L-G01');
   await page.getByText('更多信息', { exact: true }).click();
-  await page.getByRole('button', { name: '删除当前节点', exact: true }).click();
-  await page.waitForFunction(() => !document.querySelector('.react-flow__node-item[data-id="L-G01"]'));
+  assert(await page.getByRole('button', { name: '闸口或结构规则保护，不可删除', exact: true }).isDisabled());
+  assert(await page.getByLabel('类型', { exact: true }).isDisabled());
+  await page.locator('.react-flow__node-item[data-id="L-G01"]').click();
+  await page.keyboard.press('Delete');
+  assert.equal(await page.locator('.react-flow__node-item[data-id="L-G01"]').count(), 1);
   await selectNode('L-N03');
   await statusSelect.selectOption('running');
   assert.equal(await statusSelect.inputValue(), 'running');
   await page.locator('.react-flow__node-station[data-id="L-S01"] strong').click();
   assert.equal(await page.locator('.pipeline-detail-core details').evaluate(element => element.open), false);
-  record('站说明默认折叠；保留闸口时拦截下游，删除可选闸口后允许推进');
+  record('站说明默认折叠；闸口防删除但不硬阻断下游；未登录禁用联网并显示登录入口');
   await page.getByRole('button', { name: '+ 新建星轨', exact: true }).click();
   await page.waitForFunction(storageKey => JSON.parse(window.testData[storageKey]).demands.at(-1).workflowId === 'blank-star-track', key);
   await page.waitForFunction(() => document.querySelectorAll('.react-flow__node-station, .react-flow__node-item').length === 0);

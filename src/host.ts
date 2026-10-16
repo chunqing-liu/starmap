@@ -1,13 +1,12 @@
 import type { GroveSDK } from '@beings/grove-plugin-sdk';
+import { createHostDataWriter } from './host-data-writer';
 declare global { interface Window { grove: GroveSDK } }
 let values: Record<string, string> = Object.create(null);
 let saveRevision = 0;
-let pendingSave = Promise.resolve();
-function persist(patch: Record<string, string | null>) {
-  const saving = pendingSave.then(() => window.grove.updateData(patch));
-  pendingSave = saving.catch(() => {});
-  return saving;
-}
+const persist = createHostDataWriter(patch => window.grove.updateData(patch));
+let accountScope = '';
+export function setPluginAccountScope(scope: string) { accountScope = scope; }
+function scopedKey(key: string) { return accountScope && !key.startsWith('beings:star-map:network') ? 'starmap:account:' + encodeURIComponent(accountScope) + ':' + key : key; }
 function status(text: string) { const element = document.getElementById('plugin-status'); if (element) element.textContent = text; }
 export async function initializeStorage() {
   const data = await window.grove.loadData();
@@ -17,8 +16,9 @@ export async function initializeStorage() {
 }
 // Keep the upstream schema and per-demand comment keys, backed by host-owned data.
 export const pluginStorage = {
-  getItem: (key: string) => values[key] ?? null,
+  getItem: (key: string) => values[scopedKey(key)] ?? null,
   setItem(key: string, value: string) {
+    key = scopedKey(key);
     values[key] = value;
     const revision = ++saveRevision;
     status('正在保存…');
@@ -26,11 +26,15 @@ export const pluginStorage = {
       status(`保存失败：${error instanceof Error ? error.message : '请重试'}。请保留页面并继续编辑以重试保存。`);
     });
   },
-  async setItems(patch: Record<string, string | null>) {
+  setItems(patch: Record<string, string | null>) {
+    return writeItems(Object.fromEntries(Object.entries(patch).map(([key, value]) => [scopedKey(key), value])));
+  },
+};
+async function writeItems(patch: Record<string, string | null>) {
     const revision = ++saveRevision;
     status('正在保存…');
     try {
-      await persist(patch);
+      await persist(patch, true);
       for (const [key, value] of Object.entries(patch)) {
         if (value === null) delete values[key];
         else values[key] = value;
@@ -40,8 +44,15 @@ export const pluginStorage = {
       status(`保存失败：${error instanceof Error ? error.message : '请重试'}。`);
       throw error;
     }
-  },
-};
+}
+export function capturePluginStorage() {
+  const scope = accountScope;
+  const resolve = (key: string) => scope && !key.startsWith('beings:star-map:network') ? 'starmap:account:' + encodeURIComponent(scope) + ':' + key : key;
+  return {
+    getItem: (key: string) => values[resolve(key)] ?? null,
+    setItems: (patch: Record<string, string | null>) => writeItems(Object.fromEntries(Object.entries(patch).map(([key, value]) => [resolve(key), value]))),
+  };
+}
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 export function pluginToast(message: unknown) {
   let element = document.getElementById('plugin-toast');

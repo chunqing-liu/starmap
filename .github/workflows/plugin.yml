@@ -62,4 +62,8 @@ jobs:
         run: |
           cd dist
           sha256sum --check desktop-plugin.sha256
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release already exists; keep published assets unchanged."
+            exit 0
+          fi
           gh release create "$RELEASE_TAG" desktop-plugin.tar.gz desktop-plugin.sha256 desktop.plugin.json --verify-tag --title "Starmap $RELEASE_TAG" --generate-notes

@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "apiVersion": 1,
-  "minSdkVersion": "1.3.0",
+  "minSdkVersion": "1.5.0",
   "id": "community.pipeline",
   "name": "星图流程看板",
-  "version": "1.4.0",
-  "description": "用站、节点和闸口编排星轨，通过文件交换团队包、导入前备份与恢复实现离线团队同步。",
+  "version": "1.5.0",
+  "description": "星轨编排、GitLab 会话登录与秒级自动同步，支持离线草稿和并发冲突核对；凭据仅本次内存，催办仅模拟。",
   "author": "chunqing-liu / Beings contributors · Portal Desktop plugin adaptation",
   "entry": "index.html",
-  "capabilities": ["storage", "town.public.read", "being.read", "being.compose", "being.chat", "ui", "workspace.read", "being.tasks.read"],
+  "capabilities": ["storage", "network", "town.public.read", "being.read", "being.compose", "being.chat", "ui", "workspace.read", "being.tasks.read"],
   "contributes": {
     "views": [{ "id": "board", "title": "星图" }],
     "commands": [{ "id": "open-board", "title": "打开星图", "view": "board" }]
