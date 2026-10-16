@@ -2,6 +2,8 @@
 
 星图是 Portal Desktop 的流程协作插件。插件 ID 保持 community.pipeline，更新不清空已有本机数据。
 
+团队源码、版本更新与正式发布以[公司 GitLab / agent-team/starmap](http://newgit.d5techs.com.cn/agent-team/starmap) 为唯一依据。协作分支、MR 和分发规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
 ## 1.5.0 新功能
 
 - GitLab 团队数据读写通过宿主公开 grove.network.fetch 接口，不依赖被 CSP 阻止的原生请求。
@@ -16,7 +18,7 @@
 
 使用 **Portal Desktop 0.1.10 或更新的兼容版本**（公开 SDK 至少 1.5.0）。已实测 0.1.10；更高版本需继续保持 API 1 / SDK 1.5 兼容，不能视为已逐版测试。0.1.9 不在本次正式支持范围。
 
-下载 GitHub Release 的 desktop-plugin.tar.gz，在桌面插件管理中通过受支持的本地导入方式加载；也可待 Grove 条目更新后从 Grove 更新。本仓库发布不自动更新 Grove。不要把压缩包解压后替换运行中的生产数据目录。
+后续正式插件包优先从本 GitLab 仓的 [Releases](http://newgit.d5techs.com.cn/agent-team/starmap/-/releases) 获取，并在桌面插件管理中通过受支持的本地导入方式加载。既有发布物仅作为过渡保留，本次源码迁入不删改或重发插件包；GitLab 标签源码归档不是可安装的 desktop-plugin.tar.gz。不要把压缩包解压后替换运行中的生产数据目录。
 
 ## 首次联网
 
