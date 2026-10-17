@@ -46,10 +46,13 @@ export class SessionLogin {
   }
   async switchSpace(space: string) {
     if (!this.current || !this.config || !this.user || !this.#grant) throw new NetworkError('credentials', '请先登录。');
-    await this.current.checkpoint();
-    const grant = this.#grant;
-    this.current.dispose();
-    this.current = new TeamSync(createTeamStorage(this.hostFetch, async () => this.#grant === grant ? grant.token : null, this.config), this.cache, space, this.fresh(), String(this.user.id), true);
+    validateSpaceName(space);
+    const previous = this.current, grant = this.#grant;
+    if (space === previous.space) return previous;
+    await previous.checkpoint();
+    if (this.current !== previous || this.#grant !== grant) throw new NetworkError('credentials', '会话已变更，请重新选择共享空间。');
+    const next = new TeamSync(createTeamStorage(this.hostFetch, async () => this.#grant === grant ? grant.token : null, this.config), this.cache, space, this.fresh(), String(this.user.id), true);
+    previous.dispose(); this.current = next;
     return this.current;
   }
 }

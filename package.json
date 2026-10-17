@@ -1,7 +1,7 @@
 {
   "name": "starmap-plugin",
   "private": true,
-  "version": "1.5.0",
+  "version": "1.5.1",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -17,10 +17,13 @@
     "test:autosync-ui": "node tests/auto-sync-ui.mjs",
     "test:geometry": "node --test tests/placement.test.mjs",
     "test:branches": "node --test tests/branch-sync.test.mjs tests/gitlab-compat.test.mjs",
+    "test:shared-join": "node --test tests/shared-connection.test.mjs",
+    "test:shared-tracks": "node --test tests/shared-tracks.test.mjs",
+    "test:shared-tracks-ui": "node tests/shared-tracks-ui.mjs",
     "prepare:real-connection": "node scripts/prepare-real-connection.mjs",
     "test:desktop-integration": "node tests/desktop-integration.mjs",
     "test:desktop-stability": "node tests/desktop-integration.mjs --stability",
-    "check": "npm run typecheck && npm run test:team-sync && npm run test:network && npm run test:activity && npm run test:autosync && npm run test:geometry && npm run test:branches && npm run build && npm run verify:package"
+    "check": "npm run typecheck && npm run test:team-sync && npm run test:network && npm run test:activity && npm run test:autosync && npm run test:geometry && npm run test:branches && npm run test:shared-join && npm run test:shared-tracks && npm run build && npm run verify:package"
   },
   "dependencies": {
     "@xyflow/react": "12.11.6",
