@@ -60,3 +60,42 @@ test('默认模板记录规范版本，已发送与已采用分开', () => {
   });
   assert.ok(m.CLOSURE_TRACKS.includes('dev') && m.CLOSURE_TRACKS.includes('release'));
 });
+test('开发自测 N12 在开发闭环内，接在代码评审后、实现审核前', () => {
+  assert.equal(node('N12').stationId, 'S04');
+  assert.equal(node('N12').track, 'dev');
+  assert.ok(flow.transitions.some((t) => t.fromNode === 'N05' && t.toNode === 'N12'));
+  assert.ok(flow.transitions.some((t) => t.fromNode === 'N12' && t.toNode === 'H3'));
+  assert.ok(!flow.nodes.filter((n) => n.track === 'dev').map((n) => n.id).includes('N06'), '开发闭环不等正式测试');
+});
+
+test('实现审核 H3 向正式测试输出固定候选', () => {
+  const edge = flow.transitions.find((t) => t.fromNode === 'H3' && t.toNode === 'N06');
+  assert.ok(edge, 'H3 应把固定候选交给测试执行');
+  assert.equal(edge.event, '固定候选');
+  assert.match(node('N06').description, /固定开发候选/);
+});
+
+test('测试设计是有作者的节点，H2 退回能回到设计人手上', () => {
+  assert.equal(node('N13').stationId, 'S02');
+  assert.deepEqual(station('S02').nodeIds, ['N02', 'N13', 'H2']);
+  assert.ok(flow.transitions.some((t) => t.fromNode === 'N02' && t.toNode === 'N13'));
+  assert.ok(flow.transitions.some((t) => t.fromNode === 'N13' && t.toNode === 'H2'));
+  const back = flow.transitions.find((t) => t.fromNode === 'H2' && t.toNode === 'N13');
+  assert.ok(back, 'H2 退回应落到测试设计');
+  assert.equal(back.event, '退回');
+});
+
+test('H2/H3 默认自动判定，H1/H4 仍然人工', () => {
+  assert.equal(node('H2').requires_human_review, false);
+  assert.equal(node('H3').requires_human_review, false);
+  assert.equal(node('H1').requires_human_review, true);
+  assert.equal(node('H4').requires_human_review, true);
+  assert.match(node('H3').description, /高风险/);
+});
+
+test('证据绑定版本、返修保留原快照', () => {
+  assert.match(node('N11').description, /版本/);
+  assert.match(node('N11').description, /复用/);
+  assert.match(node('N07').description, /快照/);
+  assert.match(node('N07').description, /受影响项/);
+});
