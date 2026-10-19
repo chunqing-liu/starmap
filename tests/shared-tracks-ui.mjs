@@ -29,6 +29,11 @@ const watchdog = setTimeout(() => {
   void browser.close().finally(() => process.exit(1));
   setTimeout(() => process.exit(1), 2000).unref();
 }, 90000);
+async function openAdvanced(bar) {
+  const details = bar.locator('details.pipeline-network-advanced');
+  if (!await details.count()) return;
+  if (!await details.evaluate(element => element.open)) await details.locator('summary').click();
+}
 try {
   phase = 'create isolated context';
   const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
@@ -54,12 +59,13 @@ try {
   phase = 'login / empty directory'; await page.goto(pathToFileURL(htmlPath).href);
   const bar = page.getByRole('region', { name: '团队联网同步', exact: true });
   await bar.getByRole('button', { name: '登录 / 联网设置', exact: true }).click();
+  await openAdvanced(bar);
   await bar.getByLabel('GitLab 入口', { exact: true }).fill(server.config.baseUrl);
   await bar.getByLabel('GitLab 项目 ID', { exact: true }).fill(String(server.config.projectId));
   await bar.getByLabel('GitLab 目标分支', { exact: true }).fill(server.config.branch);
   await bar.getByLabel('联网空间标识', { exact: true }).fill('uncreated');
   await bar.getByLabel('GitLab 访问令牌', { exact: true }).fill('synthetic-ui-session-only');
-  await bar.getByRole('button', { name: '仅本次会话登录', exact: true }).click();
+  await bar.getByRole('button', { name: '连接', exact: true }).click();
   const directory = bar.getByRole('region', { name: '共享空间目录', exact: true });
   await directory.getByText(/此分支暂无共享空间/).waitFor();
   assert(await directory.getByLabel('选择共享空间', { exact: true }).isDisabled());
@@ -153,16 +159,17 @@ try {
   const receiverBar = receiver.getByRole('region', { name: '团队联网同步', exact: true });
   const draftBefore = await receiver.locator('.pipeline-demand-item').first().innerText();
   await receiverBar.getByRole('button', { name: '登录 / 联网设置', exact: true }).click();
-  await receiverBar.getByRole('button', { name: '加入已有团队空间', exact: true }).click();
+  await openAdvanced(receiverBar);
+  await receiverBar.getByRole('button', { name: '加入别的团队空间', exact: true }).click();
   const joinInput = receiverBar.getByLabel('团队空间连接信息', { exact: true });
   await joinInput.fill(JSON.stringify({ ...shared, token: 'must-not-be-accepted' }));
   await receiverBar.getByRole('button', { name: '校验并预览', exact: true }).click();
   await receiverBar.getByRole('alert').getByText(/不允许的字段/).waitFor();
-  assert.equal(await receiverBar.getByLabel('GitLab 入口', { exact: true }).inputValue(), '');
+  assert.equal(await receiverBar.getByLabel('GitLab 入口', { exact: true }).inputValue(), 'http://newgit.d5techs.com.cn');
   await joinInput.fill(sharedText);
   await receiverBar.getByRole('button', { name: '校验并预览', exact: true }).click();
   await receiverBar.getByRole('region', { name: '加入目标预览', exact: true }).waitFor();
-  await receiverBar.getByRole('button', { name: '确认目标并用本人账号登录', exact: true }).click();
+  await receiverBar.getByRole('button', { name: '确认并用本人账号登录', exact: true }).click();
   assert.equal(await receiverBar.getByLabel('GitLab 入口', { exact: true }).inputValue(), shared.baseUrl);
   assert.equal(await receiverBar.getByLabel('GitLab 项目 ID', { exact: true }).inputValue(), String(shared.projectId));
   assert.equal(await receiverBar.getByLabel('GitLab 目标分支', { exact: true }).inputValue(), shared.branch);

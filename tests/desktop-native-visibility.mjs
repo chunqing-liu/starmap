@@ -37,7 +37,7 @@ async function nativeRun() {
     await click(plugin, "登录 / 联网设置");
     window.restore(); window.show(); window.focus();
     await plugin.executeJavaScript('(() => { const fill = (label, value) => { const input = document.querySelector("input[aria-label=" + JSON.stringify(label) + "]"); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, value); input.dispatchEvent(new Event("input", { bubbles: true })); }; fill("联网空间标识", "isolated-test"); fill("GitLab 访问令牌", "local-test-a"); })()', true);
-    await click(plugin, "仅本次会话登录");
+    await click(plugin, "连接");
     await until(() => plugin.executeJavaScript('document.body.textContent.includes("已同步 · isolated-test")'), "Native session did not authenticate with local fixture");
     await plugin.executeJavaScript('(() => { const select = document.querySelector("select[aria-label=自动同步检查间隔]"); Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set.call(select, "3"); select.dispatchEvent(new Event("change", { bubbles: true })); })()', true);
     await click(plugin, "联网设置");

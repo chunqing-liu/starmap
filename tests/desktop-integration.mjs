@@ -83,13 +83,14 @@ async function login(client, account) {
   const settings = client.bar.getByRole("region", { name: "登录与自动同步设置", exact: true });
   if (!await settings.isVisible()) await client.bar.getByRole("button", { name: "登录 / 联网设置", exact: true }).click();
   await client.bar.getByLabel("GitLab 访问令牌", { exact: true }).waitFor();
+  { const details = client.bar.locator("details.pipeline-network-advanced"); if (await details.count() && !await details.evaluate(element => element.open)) await details.locator("summary").click(); }
   await client.bar.getByLabel("GitLab 入口", { exact: true }).fill(backend.fixture.config.baseUrl);
   await client.bar.getByLabel("GitLab 项目 ID", { exact: true }).fill(String(backend.fixture.config.projectId));
   await client.bar.getByLabel("GitLab 目标分支", { exact: true }).fill(backend.fixture.config.branch);
   await client.bar.getByLabel("联网空间标识", { exact: true }).fill("isolated-test");
   await client.bar.getByLabel("GitLab 访问令牌", { exact: true }).fill("local-test-" + account.toLowerCase());
   if (account === "B") await client.bar.getByLabel("GitLab 访问令牌", { exact: true }).press("Enter");
-  else await client.bar.getByRole("button", { name: "仅本次会话登录", exact: true }).click();
+  else await client.bar.getByRole("button", { name: "连接", exact: true }).click();
   await client.bar.getByText(/^已同步 · isolated-test$/).waitFor();
   await client.bar.getByRole("button", { name: "联网设置", exact: true }).click();
   await client.bar.getByLabel("自动同步检查间隔", { exact: true }).selectOption("3");

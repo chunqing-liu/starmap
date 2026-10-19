@@ -47,34 +47,41 @@ async function openClient() {
   });
   phase = 'navigate'; await page.goto(pathToFileURL(htmlPath).href);
   const bar = page.getByRole('region', { name: '团队联网同步', exact: true });
-  phase = 'wait initial UI'; await bar.getByText(/未登录 · 联网不可用/).waitFor({ timeout: 10000 });
+  phase = 'wait initial UI'; await bar.getByText(/未连接/).waitFor({ timeout: 10000 });
   assert.equal(await bar.getByRole('form', { name: 'GitLab 会话登录', exact: true }).count(), 0);
   return { page, bar, cache, context };
 }
+async function openAdvanced(bar) {
+  const details = bar.locator('details.pipeline-network-advanced');
+  if (!await details.count()) return;
+  if (!await details.evaluate(element => element.open)) await details.locator('summary').click();
+}
 async function login(client, token) {
   await client.bar.getByRole('button', { name: '登录 / 联网设置', exact: true }).click();
+  await openAdvanced(client.bar);
   await client.bar.getByLabel('GitLab 入口', { exact: true }).fill(server.config.baseUrl);
   await client.bar.getByLabel('GitLab 项目 ID', { exact: true }).fill(String(server.config.projectId));
   await client.bar.getByLabel('GitLab 目标分支', { exact: true }).fill(server.config.branch);
   await client.bar.getByLabel('联网空间标识', { exact: true }).fill('isolated-test');
   await client.bar.getByLabel('GitLab 访问令牌', { exact: true }).fill(token);
-  await client.bar.getByRole('button', { name: '仅本次会话登录', exact: true }).click();
+  await client.bar.getByRole('button', { name: '连接', exact: true }).click();
   await client.bar.getByText(/^已同步 · isolated-test$/).waitFor();
   assert.equal(await client.bar.getByRole('region', { name: '登录与自动同步设置', exact: true }).count(), 0);
 }
 try {
   const first = await openClient(), second = await openClient();
   await first.bar.getByRole('button', { name: '登录 / 联网设置', exact: true }).click();
-  assert.equal(await first.bar.getByLabel('GitLab 入口', { exact: true }).inputValue(), '');
+  await openAdvanced(first.bar);
+  assert.equal(await first.bar.getByLabel('GitLab 入口', { exact: true }).inputValue(), 'http://newgit.d5techs.com.cn');
   await first.bar.getByLabel('GitLab 项目 ID', { exact: true }).fill(String(server.config.projectId));
   await first.bar.getByLabel('GitLab 目标分支', { exact: true }).fill(server.config.branch);
   await first.bar.getByLabel('GitLab 入口', { exact: true }).fill('http://newgit.d5techs.com.cn.evil.invalid');
   await first.bar.getByLabel('GitLab 访问令牌', { exact: true }).fill('fixture-blocked');
-  await first.bar.getByRole('button', { name: '仅本次会话登录', exact: true }).click();
+  await first.bar.getByRole('button', { name: '连接', exact: true }).click();
   await first.bar.getByRole('alert').filter({ hasText: '安全阻断' }).waitFor(); assert.equal(server.calls.length, 0);
   assert.equal(await first.bar.getByLabel('GitLab 访问令牌', { exact: true }).inputValue(), '');
   await first.bar.getByLabel('GitLab 入口', { exact: true }).fill(server.config.baseUrl);
-  await first.bar.getByText('公司仓 HTTP 未加密：', { exact: false }).waitFor();
+  await first.bar.getByText('公司仓走 HTTP 未加密', { exact: false }).waitFor();
   await first.bar.getByRole('button', { name: '登录 / 联网设置', exact: true }).click();
   await login(first, 'fixture-A'); await login(second, 'fixture-B');
   await first.page.getByRole('button', { name: '展开右侧详情栏', exact: true }).click(); await second.page.getByRole('button', { name: '展开右侧详情栏', exact: true }).click();
@@ -104,17 +111,17 @@ try {
     assert(logout.y >= geometry.settings.y && logout.y + logout.height <= geometry.settings.bottom + 1);
     await first.page.screenshot({ path: path.join(output, 'connected-' + viewport.width + '.png') }); observations.push(geometry);
   }
-  await first.bar.getByRole('button', { name: '退出账号', exact: true }).click(); await first.bar.getByText(/未登录 · 联网不可用/).waitFor();
+  await first.bar.getByRole('button', { name: '退出账号', exact: true }).click(); await first.bar.getByText(/未连接/).waitFor();
   assert.equal(await first.bar.getByLabel('GitLab 访问令牌', { exact: true }).inputValue(), '');
-  const loginButton = await first.bar.getByRole('button', { name: '仅本次会话登录', exact: true }).boundingBox();
+  const loginButton = await first.bar.getByRole('button', { name: '连接', exact: true }).boundingBox();
   const loginSettings = await first.page.locator('.pipeline-network-settings').boundingBox(), loginCanvas = await first.page.locator('.pipeline-main').boundingBox();
   assert(loginButton.y >= loginSettings.y && loginButton.y + loginButton.height <= loginSettings.y + loginSettings.height); assert(loginCanvas.height >= 120, JSON.stringify({ loginButton, loginSettings, loginCanvas }));
   observations.push({ login800: { button: loginButton, settings: loginSettings, canvas: loginCanvas } });
   await first.page.screenshot({ path: path.join(output, 'session-login-800.png') });
-  await first.page.reload(); await first.bar.getByText(/未登录 · 联网不可用/).waitFor();
+  await first.page.reload(); await first.bar.getByText(/未连接/).waitFor();
   assert(!JSON.stringify(caches.map(cache => cache.values)).includes('fixture-A')); assert(!JSON.stringify(caches.map(cache => cache.values)).includes('fixture-B')); assert(!JSON.stringify(caches.map(cache => cache.values)).includes('fixture-blocked'));
   assert.equal(nativeRequests.length, 0); assert.deepEqual(errors, []);
-  observations.push('恶意相似 HTTP 域名零请求；目标默认空白、显式填写后公司 HTTP 直达会话登录，未加密提示可见，无重复 HTTP 确认；密码及时清空、退出 / 重载未登录、缓存无模拟令牌、零原生 HTTP(S)、零消息调用');
+  observations.push('恶意相似 HTTP 域名零请求；默认预设公司入口、显式填写后公司 HTTP 直达会话登录，未加密提示可见，无重复 HTTP 确认；密码及时清空、退出 / 重载未登录、缓存无模拟令牌、零原生 HTTP(S)、零消息调用');
   await writeFile(path.join(output, 'results.json'), JSON.stringify({ mode: 'real Chromium; two isolated contexts; mocked Grove/GitLab; no actual GitLab or messages', observations }, null, 2));
   console.log(JSON.stringify({ passed: true, artifacts: output, observations }, null, 2));
 } finally { clearTimeout(watchdog); await browser.close(); }
