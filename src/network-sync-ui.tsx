@@ -8,6 +8,7 @@ import type { PipelineLocalState } from './models/schema';
 import type { ConflictChoices } from './sync-merge';
 import { parseSharedConnection, serializeSharedConnection, type SharedConnection } from './shared-connection';
 import { TeamSpacePicker } from './team-space-picker';
+import { discoverRingSpaces, type RingSpace } from './ring-connect';
 
 const liteTeam = { label: 'Lite 项目组', endpoint: 'http://newgit.d5techs.com.cn', projectId: '724', branch: 'lite', space: 'lite' };
 const teamName = (space: string) => (space === liteTeam.space ? liteTeam.label : space || liteTeam.label);
@@ -20,6 +21,7 @@ export function NetworkSyncBar({ sync, onStateLoaded, onSessionChanged }: { sync
   const [projectId, setProjectId] = useState(liteTeam.projectId), [branch, setBranch] = useState(liteTeam.branch);
   const [shareOpen, setShareOpen] = useState(false), [shareText, setShareText] = useState(''), [shareStatus, setShareStatus] = useState('');
   const [joinOpen, setJoinOpen] = useState(false), [joinText, setJoinText] = useState(''), [joinPreview, setJoinPreview] = useState<SharedConnection | null>(null), [joinError, setJoinError] = useState(''), [joinStatus, setJoinStatus] = useState('');
+  const [rings, setRings] = useState<RingSpace[]>([]), [ringNote, setRingNote] = useState(''), [detecting, setDetecting] = useState(false);
   const tokenInput = useRef<HTMLInputElement>(null), automatic = useRef<AutoSync | null>(null);
   const loaded = useRef(onStateLoaded); loaded.current = onStateLoaded;
   const account = networkLogin.snapshot(), connected = account.connected && Boolean(sync.account);
@@ -47,6 +49,7 @@ export function NetworkSyncBar({ sync, onStateLoaded, onSessionChanged }: { sync
     const stop = window.grove.onUnload?.(unload);
     return () => { window.removeEventListener('pagehide', hide); window.removeEventListener('pageshow', show); stop?.(); };
   }, []);
+  useEffect(() => { if (open && !connected && !detecting && !rings.length) void detectRings(); }, [open, connected]);
   const run = async (operation: () => Promise<unknown>) => {
     setError('');
     try { await operation(); }
@@ -57,12 +60,29 @@ export function NetworkSyncBar({ sync, onStateLoaded, onSessionChanged }: { sync
     setPluginAccountScope(next.account ? next.remote.target + ':' + next.account : '');
     onSessionChanged(next);
   }
+  async function loginWith(token: string, target?: RingSpace) {
+    const nextEndpoint = target ? target.endpoint : endpoint, nextSpace = target ? target.space : space;
+    const nextBranch = target ? target.branch : branch, nextProject = target ? target.projectId : Number(projectId);
+    validateSpaceName(nextSpace); setLoggingIn(true); automatic.current?.stop();
+    try { const next = await networkLogin.connect(token, nextEndpoint, nextSpace, nextBranch, nextProject); if (next) { activate(next); setOpen(false); } }
+    finally { setLoggingIn(false); }
+  }
   async function login() {
     const token = tokenInput.current?.value || '';
     if (tokenInput.current) tokenInput.current.value = '';
-    validateSpaceName(space); setLoggingIn(true); automatic.current?.stop();
-    try { const next = await networkLogin.connect(token, endpoint, space, branch, Number(projectId)); if (next) { activate(next); setOpen(false); } }
-    finally { setLoggingIn(false); }
+    await loginWith(token);
+  }
+  async function detectRings() {
+    setDetecting(true); setRingNote('');
+    try { const found = await discoverRingSpaces(query => window.grove.town.query({ kind: query.kind as 'firesides' | 'fireside', id: query.id })); setRings(found.spaces); setRingNote(found.note); }
+    catch { setRings([]); setRingNote('围炉暂时读不到，可以先用下面的手动填写。'); }
+    finally { setDetecting(false); }
+  }
+  async function connectRing(ring: RingSpace) {
+    if (!await pluginConfirm('用围炉「' + ring.ringName + '」里的钥匙连接团队空间「' + ring.space + '」（项目 ' + ring.projectId + '，分支 ' + ring.branch + '）？连接后编辑的星轨会写进这个共享仓。')) return;
+    setEndpoint(ring.endpoint); setProjectId(String(ring.projectId)); setBranch(ring.branch); setSpace(ring.space);
+    if (tokenInput.current) tokenInput.current.value = '';
+    await run(async () => { await loginWith(ring.token, ring); });
   }
   async function logout() {
     await sync.checkpoint(); automatic.current?.stop(); networkLogin.disconnect(); setPluginAccountScope(''); activate(networkSession());
@@ -95,7 +115,7 @@ export function NetworkSyncBar({ sync, onStateLoaded, onSessionChanged }: { sync
   return <section className={'pipeline-network-sync is-' + snapshot.status} aria-label="团队联网同步">
     <div className="pipeline-network-summary">
       <strong role="status">{connected ? labels[snapshot.status] + ' · ' + teamName(sync.space) : teamName(sync.space) + ' · 未连接'}</strong>
-      <span>{connected ? account.user?.name + ' · 每 ' + interval + ' 秒自动核对' : '输入一次访问令牌即可加入，其它都已设好。'}</span>
+      <span>{connected ? account.user?.name + ' · 每 ' + interval + ' 秒自动核对' : '点一下连上本围炉的星图；没读到钥匙时再填令牌。'}</span>
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}>{connected ? '联网设置' : '登录 / 联网设置'}</button>
       {connected && <button type="button" disabled={snapshot.busy} onClick={() => void run(async () => { await sync.pull(); automatic.current?.wake(); })}>刷新团队星轨</button>}
       {connected && <button type="button" onClick={() => shareOpen ? setShareOpen(false) : openShare()}>{shareOpen ? '收起连接信息' : '分享团队空间信息'}</button>}
@@ -118,7 +138,13 @@ export function NetworkSyncBar({ sync, onStateLoaded, onSessionChanged }: { sync
     {open && <div className="pipeline-network-settings" role="region" aria-label="登录与自动同步设置">
       <strong>{liteTeam.label}</strong>
       {!connected ? <div role="form" aria-label="团队登录" onKeyDown={event => { if (event.key === 'Enter' && event.target instanceof HTMLInputElement && !loggingIn) { event.preventDefault(); void run(login); } }}>
-        <p>粘贴自己的访问令牌，点连接。服务器、项目、分支和空间都已经设好，不用填。</p>
+        {detecting && <p role="status">正在读围炉…</p>}
+        {!detecting && rings.length > 0 && <div className="pipeline-network-rings" role="region" aria-label="从围炉自动连接">
+          <p>围炉里已经有团队空间，点一下就连上，不用填任何东西：</p>
+          {rings.map(ring => <button key={ring.ringId + ':' + ring.space} type="button" disabled={loggingIn} onClick={() => void connectRing(ring)}>连接「{ring.ringName}」· 空间 {ring.space}</button>)}
+        </div>}
+        {!detecting && rings.length === 0 && <p role="note">{ringNote || '围炉里还没读到团队空间钥匙，可在下面手动填写。'}</p>}
+        <p>也可以直接粘贴自己的访问令牌：服务器、项目、分支和空间设过就不用填。</p>
         <label>访问令牌<input ref={tokenInput} aria-label="GitLab 访问令牌" type="password" autoComplete="off" spellCheck={false} required /></label>
         <button type="button" disabled={loggingIn} onClick={() => void run(login)}>{loggingIn ? '正在核对…' : '连接'}</button>
         <p role="note">令牌只在这次打开期间有效，关掉重开要再输一次。</p>
