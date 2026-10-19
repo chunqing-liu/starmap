@@ -23,7 +23,8 @@
     "prepare:real-connection": "node scripts/prepare-real-connection.mjs",
     "test:desktop-integration": "node tests/desktop-integration.mjs",
     "test:desktop-stability": "node tests/desktop-integration.mjs --stability",
-    "check": "npm run typecheck && npm run test:team-sync && npm run test:network && npm run test:activity && npm run test:autosync && npm run test:geometry && npm run test:branches && npm run test:shared-join && npm run test:shared-tracks && npm run build && npm run verify:package"
+    "check": "npm run typecheck && npm run test:team-sync && npm run test:network && npm run test:activity && npm run test:autosync && npm run test:geometry && npm run test:track && npm run test:branches && npm run test:shared-join && npm run test:shared-tracks && npm run build && npm run verify:package",
+    "test:track": "node --test tests/beings-track.test.mjs"
   },
   "dependencies": {
     "@xyflow/react": "12.11.6",

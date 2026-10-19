@@ -11,6 +11,23 @@ export const NODE_STATUSES = [
 ] as const;
 export type NodeStatus = (typeof NODE_STATUSES)[number];
 
+/**
+ * 开发闭环与上线准出是两套独立判定：测试只约束上线准出，不阻塞开发闭环。
+ * 依据 Lite 项目组 2026-10-19 的 provider-team-independent-testing 规范。
+ */
+export const CLOSURE_TRACKS = ["dev", "release"] as const;
+export type ClosureTrack = (typeof CLOSURE_TRACKS)[number];
+/** 返修来源：开发自测驱动的返修留在实现环节，只有正式测试驱动的返修才算独立返修。 */
+export type RepairKind = "self_test" | "formal_test";
+/** 星轨是按哪一版规范跑的；「已发送」与「已采用」是两回事，版本随实例记录。 */
+export interface SpecVersion {
+  bundle: string;
+  commit?: string;
+  transitions?: string;
+  reviewGates?: string;
+  loadedAt?: string;
+}
+
 export const EXECUTION_STATUSES = [
   "queued",
   "running",
@@ -118,6 +135,12 @@ export interface PipelineNode {
   last_seen_seq?: number;
   /** v0.2 锁定的 5 个产品闸口不可在编辑器中删除或改型。 */
   locked?: boolean;
+  /** 该节点归属哪条轨：dev=开发闭环，release=上线准出；留空表示两条轨共用（如需求入口）。 */
+  track?: ClosureTrack;
+  /** 返修来源标记；只有正式测试驱动的返修才标 formal_test。 */
+  repairKind?: RepairKind;
+  /** 正式测试驱动返修必须关联的失败报告（报告名或链接），用于区分两类返修。 */
+  relatedReport?: string;
 }
 
 export interface PipelineStation {
@@ -128,6 +151,8 @@ export interface PipelineStation {
   nodeIds: string[];
   description?: string;
   locked?: boolean;
+  /** 站内节点同属一条轨时标在站上，便于画布按轨呈现。 */
+  track?: ClosureTrack;
 }
 
 export type PipelineCanvasItem = PipelineNode | PipelineStation;
@@ -171,6 +196,8 @@ export interface PipelineFlow {
   /** 默认只决定初始呈现；实例中的坐标可自由覆盖。 */
   layout: Record<string, PipelinePoint>;
   itemOrder: string[];
+  /** 默认流程按哪一版规范编排；实例可覆写。 */
+  specVersion?: SpecVersion;
 }
 
 export type NodeOverride = Partial<Pick<
@@ -209,6 +236,8 @@ export interface Demand {
   unread?: boolean;
   /** bug 修复组的 Jira 兼容字段与状态历史。 */
   bug?: BugIssue;
+  /** 该星轨实际采用的规范版本；与流程默认值不同时以这里为准。 */
+  specVersion?: SpecVersion;
   nodeStates: Partial<Record<string, NodeStatus>>;
   activityEvents?: NodeActivityEvent[];
   nodeOverrides: Record<string, NodeOverride>;
