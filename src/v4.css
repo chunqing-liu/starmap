@@ -587,3 +587,27 @@
   .pipeline-toolbar-actions { width: 100%; }
   .pipeline-toolbar-button { flex: 1 1 0; }
 }
+
+/* 空星轨：新建之前画布不显示任何默认流程 */
+.pipeline-main-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 320px;
+  padding: 48px 24px;
+  text-align: center;
+  color: #8a8f98;
+}
+.pipeline-main-empty strong {
+  font-size: 16px;
+  color: #d7dbe0;
+  font-weight: 600;
+}
+.pipeline-main-empty p {
+  margin: 0;
+  max-width: 340px;
+  font-size: 13px;
+  line-height: 1.7;
+}

@@ -6,7 +6,7 @@ import { gitlabFixture, memoryCache } from './network-fixture.mjs';
 
 const compiled = await build({ bundle: true, write: false, format: 'esm', platform: 'node', stdin: { contents: 'export * from "./src/storage"; export * from "./src/sync"; export * from "./src/sync-merge"; export * from "./src/gitlab-client"; export * from "./src/edit-policy"; export * from "./src/models/templates";', resolveDir: fileURLToPath(new URL('../', import.meta.url)) } });
 const api = await import('data:text/javascript;base64,' + Buffer.from(compiled.outputFiles[0].text).toString('base64'));
-const initial = () => structuredClone(api.createInitialPipelineState());
+const initial = () => { const s = structuredClone(api.createInitialPipelineState()); s.demands = [structuredClone(api.defaultDemand), structuredClone(api.defaultBugDemand)]; s.selectedDemandId = s.demands[0].id; return s; };
 const draft = (sync, change) => { const state = structuredClone(sync.snapshot().draft); change(state); return sync.stage(state); };
 const session = (server, cache = memoryCache(), state = initial(), credentials = async () => 'isolated-fixture-credential') => new api.TeamSync(api.createTeamStorage(server.fetch, credentials, server.config), cache, 'isolated-test', state);
 

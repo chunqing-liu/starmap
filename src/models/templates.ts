@@ -117,7 +117,7 @@ export function createInitialPipelineState(): PipelineLocalState {
     id: "star-map-default", name: "我的星图", version: "v6", sourceBoardId: "待补充",
     sourceVersion: "pipeline/v6-requirements", branchName: "main", ownerGroup: "产品交付组",
     currentUserId: LOCAL_USER_ID, revision: 1,
-  }, selectedDemandId: defaultDemand.id, demands: [structuredClone(defaultDemand), structuredClone(defaultBugDemand)] };
+  }, selectedDemandId: "", demands: [] };
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -242,12 +242,12 @@ function pruneStationAnchors(demand: Demand): Demand {
 /** 写入前再次归一化，防止运行期旧对象/外部注入的 null 项重新污染 localStorage。 */
 export function sanitizePipelineState(state: PipelineLocalState): PipelineLocalState {
   const demands = state.demands.map((demand, index) => normalizeDemand(demand, index)).filter((item): item is Demand => Boolean(item)).map(pruneStationAnchors);
-  const fallback = demands[0] || structuredClone(defaultDemand);
+  const fallback = demands[0];
   return {
     ...state, schemaVersion: 4,
     board: { ...createInitialPipelineState().board, ...state.board, version: "v6", sourceVersion: "pipeline/v6-requirements" },
-    demands: demands.length ? demands : [fallback],
-    selectedDemandId: demands.some((item) => item.id === state.selectedDemandId) ? state.selectedDemandId : fallback.id,
+    demands,
+    selectedDemandId: demands.some((item) => item.id === state.selectedDemandId) ? state.selectedDemandId : (fallback?.id || ""),
   };
 }
 

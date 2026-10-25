@@ -32,7 +32,7 @@ export function validateSpaceName(space: string) {
 }
 export function validateState(value: unknown): PipelineLocalState {
   const candidate = value as PipelineLocalState | null;
-  if (!candidate || candidate.schemaVersion !== 4 || !candidate.board || typeof candidate.board !== 'object' || Array.isArray(candidate.board) || !Array.isArray(candidate.demands) || !candidate.demands.length) throw new NetworkError('format', '远端或缓存不是有效的 v4 星图；不会覆盖现有数据。');
+  if (!candidate || candidate.schemaVersion !== 4 || !candidate.board || typeof candidate.board !== 'object' || Array.isArray(candidate.board) || !Array.isArray(candidate.demands)) throw new NetworkError('format', '远端或缓存不是有效的 v4 星图；不会覆盖现有数据。');
   const identifiers = candidate.demands.map(demand => demand?.id);
   if (identifiers.some(identifier => typeof identifier !== 'string' || !identifier) || new Set(identifiers).size !== identifiers.length) throw new NetworkError('format', '星轨 id 缺失或重复；不会自动丢弃数据。');
   const sanitized = sanitizePipelineState(candidate);
@@ -43,7 +43,7 @@ export function validateState(value: unknown): PipelineLocalState {
 }
 export function sharedState(state: PipelineLocalState): PipelineLocalState {
   const result = validateState(state);
-  return { ...result, selectedDemandId: result.demands[0].id, board: { ...result.board, currentUserId: 'team-member', revision: 0 } };
+  return { ...result, selectedDemandId: result.demands[0]?.id || '', board: { ...result.board, currentUserId: 'team-member', revision: 0 } };
 }
 export function stableJson(value: unknown): string {
   if (Array.isArray(value)) return '[' + value.map(stableJson).join(',') + ']';

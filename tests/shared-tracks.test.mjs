@@ -7,7 +7,7 @@ import { memoryCache } from './network-fixture.mjs';
 
 const compiled = await build({ bundle: true, write: false, platform: 'node', format: 'esm', stdin: { contents: 'export * from "./src/network-auth"; export * from "./src/sync"; export * from "./src/auto-sync"; export * from "./src/models/templates"; export * from "./src/team-space-picker";', resolveDir: fileURLToPath(new URL('../', import.meta.url)) } });
 const api = await import('data:text/javascript;base64,' + Buffer.from(compiled.outputFiles[0].text).toString('base64'));
-const initial = () => structuredClone(api.createInitialPipelineState());
+const initial = () => { const s = structuredClone(api.createInitialPipelineState()); s.demands = [structuredClone(api.defaultDemand), structuredClone(api.defaultBugDemand)]; s.selectedDemandId = s.demands[0].id; return s; };
 async function session(cache = memoryCache()) {
   const calls = [];
   const hostFetch = async address => {

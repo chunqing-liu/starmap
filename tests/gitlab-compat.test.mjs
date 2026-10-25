@@ -14,6 +14,8 @@ const json = (value, status = 200, headers = {}) => new Response(JSON.stringify(
 
 function compatibilityServer(options = {}) {
   const calls = [], state = structuredClone(api.createInitialPipelineState());
+  state.demands = [structuredClone(api.defaultDemand), structuredClone(api.defaultBugDemand)];
+  state.selectedDemandId = state.demands[0].id;
   let committed = false;
   const fetch = async (address, init = {}) => {
     const url = new URL(address), endpoint = url.pathname.split('/projects/9001')[1];

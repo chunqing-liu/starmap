@@ -84,7 +84,7 @@ export class TeamSync {
   }
   private applyRemoteDraft(state: PipelineLocalState) {
     const previous = this.journal.draft;
-    this.journal.draft = { ...state, selectedDemandId: state.demands.some(demand => demand.id === previous.selectedDemandId) ? previous.selectedDemandId : state.demands[0].id, board: { ...state.board, currentUserId: previous.board.currentUserId, revision: previous.board.revision } };
+    this.journal.draft = { ...state, selectedDemandId: state.demands.some(demand => demand.id === previous.selectedDemandId) ? previous.selectedDemandId : (state.demands[0]?.id || ''), board: { ...state.board, currentUserId: previous.board.currentUserId, revision: previous.board.revision } };
     this.emit(true);
   }
   private integrate(remote: RemoteSpace) {
@@ -154,6 +154,7 @@ export class TeamSync {
     if (!this.journal.base) { this.message = '首次推送前请先拉取，核验空间和权限。'; this.emit(); return; }
     if (!this.journal.base.state && !confirmCreate) { this.message = '首次迁移需要用户明确确认。'; this.emit(); return; }
     if (!this.dirty) return;
+    if (!this.journal.draft.demands.length) { this.message = '本地还没有星轨，暂不上传，避免清空团队空间。'; this.emit(); return; }
     this.active = true; this.errorCode = null; this.status = 'syncing'; this.emit();
     const sent = structuredClone(this.journal.draft), revision = this.journal.base.rev;
     try {

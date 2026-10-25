@@ -34,7 +34,10 @@ test('本机存储：失败如实拒绝，不自动重试权限错误；后续�
   const recovered = write({ draft: 'retry after restoring storage' }); timers.shift()(); await recovered; assert.equal(attempts, 2);
 });
 test('联网日志：在途缓存写期间的快速草稿合并，不回写过时队列，checkpoint 等待最新值', async () => {
-  const initial = api.createInitialPipelineState(), backend = gitlabFixture(initial), cache = memoryCache();
+  const initial = api.createInitialPipelineState();
+  initial.demands = [structuredClone(api.defaultDemand), structuredClone(api.defaultBugDemand)];
+  initial.selectedDemandId = initial.demands[0].id;
+  const backend = gitlabFixture(initial), cache = memoryCache();
   let release, writes = 0;
   const hold = new Promise(resolve => { release = resolve; });
   const persist = cache.setItems.bind(cache);

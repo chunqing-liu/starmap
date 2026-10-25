@@ -12,6 +12,9 @@ const plain = value => JSON.parse(JSON.stringify(value));
 const fixture = (name = '团队甲') => {
   const state = models.createInitialPipelineState();
   state.board.name = name;
+  // 2026-10-21 起产品行为是「初始没有星轨」；同步类用例仍需星轨作夹具，故显式注入。
+  state.demands = [plain(models.defaultDemand), plain(models.defaultBugDemand)];
+  state.selectedDemandId = state.demands[0].id;
   return plain(models.sanitizePipelineState(state));
 };
 const packageText = spaces => JSON.stringify({ schema: models.TEAM_SCHEMA, version: 1, exported_at: '2026-10-14T08:00:00Z', app_version: '1.4.0', spaces });
